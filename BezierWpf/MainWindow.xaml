@@ -1,0 +1,25 @@
+﻿<Window x:Class="BezierWpf.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:BezierWpf"
+        Title="BezierWpf" Height="350" Width="525">
+    <Window.CommandBindings>
+        <CommandBinding Command="{x:Static local:MainWindow.LineCommand}" Executed="FigureLine" />
+        <CommandBinding Command="{x:Static local:MainWindow.RectangleCommand}" Executed="FigureRectangle" />
+        <CommandBinding Command="{x:Static local:MainWindow.BezierCommand}" Executed="FigureBezier" />
+    </Window.CommandBindings>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"></RowDefinition>
+            <RowDefinition Height="*"></RowDefinition>
+        </Grid.RowDefinitions>
+        <Menu VerticalAlignment="Top">
+            <MenuItem Header="図形">
+                <MenuItem Header="線分" Command="{x:Static local:MainWindow.LineCommand}" />
+                <MenuItem Header="矩形" Command="{x:Static local:MainWindow.RectangleCommand}" />
+                <MenuItem Header="曲線" Command="{x:Static local:MainWindow.BezierCommand}" />
+            </MenuItem>
+        </Menu>
+        <local:View Grid.Row="1" x:Name="view" />
+    </Grid>
+</Window>
