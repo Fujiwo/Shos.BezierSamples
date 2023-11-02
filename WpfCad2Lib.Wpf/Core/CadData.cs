@@ -1,52 +1,27 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using WpfCad2Lib.Core;
 using System.Windows;
 using System.Windows.Controls;
 
 namespace WpfCad2Lib.Wpf
 {
+    using Core;
+
     public class CadData : IEnumerable<Figure>
     {
         readonly IList<Figure>   figures         = new List<Figure>();
-        readonly FigureAttribute figureAttribute = new FigureAttribute();
-        readonly CadUndo         undo            = new CadUndo();
+        readonly FigureAttribute figureAttribute = new();
+        readonly CadUndo         undo            = new();
 
-        public FigureAttribute FigureAttribute
-        {
-            get { return figureAttribute; }
-        }
+        public FigureAttribute FigureAttribute => figureAttribute;
+        public bool CanUndo => undo.CanUndo;
+        public bool CanRedo => undo.CanRedo;
+        public bool IsEmpty => Count == 0;
+        public int Count => figures.Count;
 
-        public bool CanUndo
-        {
-            get { return undo.CanUndo; }
-        }
-
-        public bool CanRedo
-        {
-            get { return undo.CanRedo; }
-        }
-
-        public bool IsEmpty
-        {
-            get { return Count == 0; }
-        }
-
-        public int Count
-        {
-            get { return figures.Count; }
-        }
-
-        public IEnumerator<Figure> GetEnumerator()
-        {
-            return figures.GetEnumerator();
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
+        public IEnumerator<Figure> GetEnumerator() => figures.GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
         //public int IndexOf(Figure item)
         //{
@@ -75,20 +50,12 @@ namespace WpfCad2Lib.Wpf
         //    }
         //}
 
-        public void Add(Figure figure)
-        {
-            undo.Add(figures, figure);
-        }
+        public void Add(Figure figure) => undo.Add(figures, figure);
 
-        public void Remove(Figure figure)
-        {
-            undo.Remove(figures, figure);
-        }
+        public void Remove(Figure figure) => undo.Remove(figures, figure);
             
         public bool Update(IList<Figure> figures, Figure olderFigure, Figure newerFigure)
-        {
-            return undo.Update(figures, olderFigure, newerFigure);
-        }
+            => undo.Update(figures, olderFigure, newerFigure);
 
         public void RemoveAll()
         {
@@ -106,14 +73,10 @@ namespace WpfCad2Lib.Wpf
         }
 
         void SelectAll(UIElementCollection elementCollection, bool isSelected = true)
-        {
-            figures.ForEach(figure => figure.Select(elementCollection, isSelected));
-        }
+            => figures.ForEach(figure => figure.Select(elementCollection, isSelected));
 
         void Select(UIElementCollection elementCollection, Figure figure)
-        {
-            figures.ForEach(aFigure => aFigure.Select(elementCollection, object.ReferenceEquals(aFigure, figure)));
-        }
+            => figures.ForEach(aFigure => aFigure.Select(elementCollection, object.ReferenceEquals(aFigure, figure)));
 
         public IEnumerable<Figure> GetSelected(bool isSelected = true)
         {
@@ -124,9 +87,7 @@ namespace WpfCad2Lib.Wpf
         }
 
         public Figure GetSelectedOne(bool isSelected = true)
-        {
-            return figures.FirstOrDefault(figure => figure.IsSelected == isSelected);
-        }
+            => figures.FirstOrDefault(figure => figure.IsSelected == isSelected);
 
         public Figure Find(Point point, double nearDistance)
         {
@@ -160,10 +121,7 @@ namespace WpfCad2Lib.Wpf
             undo.Clear();
         }
 
-        public void StartCommand()
-        {
-            undo.StartCommand();
-        }
+        public void StartCommand() => undo.StartCommand();
 
         //public bool Contains(Figure item)
         //{
