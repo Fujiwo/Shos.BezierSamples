@@ -7,12 +7,11 @@ namespace BezierWinForm
 {
     public partial class Model : Component, IEnumerable<Figure>, IDrawableSubject
     {
-        public event Action<IDrawable> Update;
+        public event Action<IDrawable>? Update;
 
         List<Figure> data = new List<Figure>();
 
-        public Model()
-        { InitializeComponent(); }
+        public Model() => InitializeComponent();
 
         public Model(IContainer container)
         {
@@ -23,14 +22,10 @@ namespace BezierWinForm
         public void Add(Figure figure)
         {
             data.Add(figure);
-            if (Update != null)
-                Update(figure);
+            Update?.Invoke(figure);
         }
 
-        public IEnumerator<Figure> GetEnumerator()
-        { return data.GetEnumerator(); }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        { return GetEnumerator(); }
+        public IEnumerator<Figure> GetEnumerator() => data.GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 }

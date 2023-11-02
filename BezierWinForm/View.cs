@@ -6,7 +6,7 @@ namespace BezierWinForm
 {
     public partial class View : UserControl
     {
-        public Model DataSource { get; set; }
+        public Model? DataSource { get; set; }
 
         public View()
         {
@@ -27,7 +27,7 @@ namespace BezierWinForm
 
         void OnPaint(object sender, PaintEventArgs e)
         {
-            if (DataSource == null)
+            if (DataSource is null)
                 return;
 
             SetAntiAlias(e.Graphics);

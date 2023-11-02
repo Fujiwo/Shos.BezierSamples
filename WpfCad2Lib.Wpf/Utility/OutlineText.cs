@@ -9,20 +9,13 @@ namespace WpfCad2Lib.Wpf
 		Geometry textGeometry          = null;
         Geometry textHighLightGeometry = null;
 
-        public OutlineText()
-        {
-            Effect = Common.DefaultShadowEffect;
-        }
+        public OutlineText() => Effect = Common.DefaultShadowEffect;
 
 		protected override Size MeasureOverride(Size a)
-		{
-            return textHighLightGeometry == null ? new Size(0, 0) : textHighLightGeometry.Bounds.Size;
-		}
+			=> textHighLightGeometry == null ? new Size(0, 0) : textHighLightGeometry.Bounds.Size;
 
         static void OnOutlineTextInvalidated(DependencyObject d, DependencyPropertyChangedEventArgs e)
-		{
-			((OutlineText)d).CreateText();
-		}
+			=> ((OutlineText)d).CreateText();
 
         protected override void OnRender(DrawingContext drawingContext)
         {

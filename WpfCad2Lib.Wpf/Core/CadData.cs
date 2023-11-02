@@ -86,12 +86,12 @@ namespace WpfCad2Lib.Wpf
             }
         }
 
-        public Figure GetSelectedOne(bool isSelected = true)
+        public Figure? GetSelectedOne(bool isSelected = true)
             => figures.FirstOrDefault(figure => figure.IsSelected == isSelected);
 
-        public Figure Find(Point point, double nearDistance)
+        public Figure? Find(Point point, double nearDistance)
         {
-            Figure result   	   = null;
+            Figure? result   	   = null;
             double minimumDistance = double.MaxValue;
 
             figures.Aggregate(minimumDistance,

@@ -8,7 +8,7 @@ namespace BezierWpf
 {
     public abstract class Command : IMouseAccepter
     {
-        public UIElementCollection Model { protected get; set; }
+        public UIElementCollection? Model { protected get; set; }
 
         public virtual void OnClick    (Point position) {}
         public virtual void OnDragStart(Point position) {}
@@ -29,7 +29,7 @@ namespace BezierWpf
         }
 
         protected Point StartPosition { get; private set; }
-        protected Shape Shape { get; private set; }
+        protected Shape? Shape { get; private set; }
 
         public override void OnDragStart(Point position)
         {
@@ -43,8 +43,7 @@ namespace BezierWpf
             if (Shape == null) {
                 Shape = CreateShape();
                 SetAttribute(Shape);
-                if (Model != null)
-                    Model.Add(Shape);
+                Model?.Add(Shape);
             }
             Reshape(position);
         }
@@ -75,6 +74,9 @@ namespace BezierWpf
 
         protected override void Reshape(Point position)
         {
+            if (Shape is null)
+                return;
+
             ((Line)Shape).X2 = position.X;
             ((Line)Shape).Y2 = position.Y;
         }
@@ -89,6 +91,9 @@ namespace BezierWpf
 
         protected override void Reshape(Point position)
         {
+            if (Shape is null)
+                return;
+
             var rect = new Rect(StartPosition, position);
             ((Rectangle)Shape).Margin = new Thickness { Left = rect.Left, Top = rect.Top };
             ((Rectangle)Shape).Width  = rect.Width ;
@@ -100,20 +105,18 @@ namespace BezierWpf
     {
         const double sensitivity = 16.0;
 
-        List<Point> positions = null;
+        List<Point>? positions = null;
 
         protected override void OnStart()
-        {
-            positions  = new List<Point> { StartPosition };
-        }
+            => positions  = new List<Point> { StartPosition };
 
-        protected override Shape CreateShape()
-        {
-            return new Path();
-        }
+        protected override Shape CreateShape() => new Path();
 
         protected override void Reshape(Point position)
         {
+            if (positions is null || Shape is null)
+                return;
+
             if (positions.Count > 0) {
                 var lastPosition = positions[positions.Count - 1];
                 if ((position - lastPosition).Length > sensitivity)

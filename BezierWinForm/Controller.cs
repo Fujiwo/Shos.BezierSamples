@@ -6,16 +6,13 @@ namespace BezierWinForm
 {
     public partial class Controller : Component,  IDrawable, IDrawableSubject
     {
-        public event Action<IDrawable> Update;
+        public event Action<IDrawable>? Update;
 
-        BezierLine bezierLine = null;
+        BezierLine? bezierLine = null;
 
-        public Model Model { get; set; }
+        public Model? Model { get; set; }
 
-        public Controller()
-        {
-            InitializeComponent();
-        }
+        public Controller() => InitializeComponent();
 
         public Controller(IContainer container)
         {
@@ -24,13 +21,11 @@ namespace BezierWinForm
         }
 
         public void OnMouseDown(PointF point)
-        {
-            bezierLine = new BezierLine();
-        }
+            => bezierLine = new BezierLine();
 
         public void OnMouseMove(PointF point)
         {
-            if (bezierLine != null) {
+            if (bezierLine is not null) {
                 if (bezierLine.Add(point) && Update != null)
                     Update(this);
             }
@@ -38,17 +33,13 @@ namespace BezierWinForm
 
         public void OnMouseUp(PointF point)
         {
-            if (bezierLine != null) {
+            if (bezierLine is not null) {
                 bezierLine.Add(point);
-                if (Model != null)
-                    Model.Add(bezierLine);
+                Model?.Add(bezierLine);
                 bezierLine = null;
             }
         }
 
-        public void Draw(Graphics graphics)
-        {
-            bezierLine.Draw(graphics);
-        }
+        public void Draw(Graphics graphics) => bezierLine?.Draw(graphics);
     }
 }
