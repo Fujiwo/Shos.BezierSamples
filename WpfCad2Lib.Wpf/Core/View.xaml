@@ -1,0 +1,24 @@
+﻿<UserControl x:Class="WpfCad2Lib.Wpf.View"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d"
+             d:DesignHeight="300" d:DesignWidth="300" Background="Transparent"
+             SizeChanged="OnSizeChanged" KeyUp="OnKeyUp">
+    <!--
+             xmlns:WPFPdfViewer="clr-namespace:WPFPdfViewer;assembly=WPFPdfViewer"
+    -->
+    <Grid>
+        <!--<Button Content="Start" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="75" Click="StartButton_Click" />-->
+        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Visibility="Visible">
+            <Canvas x:Name="canvas" Background="Transparent" >
+                <Canvas.RenderTransform>
+                    <MatrixTransform x:Name="matrixTransform" />
+                </Canvas.RenderTransform>
+                <Image x:Name="image" />
+            </Canvas>
+        </ScrollViewer>
+        <!--<WPFPdfViewer:PdfViewer x:Name="pdfViewer" />-->
+    </Grid>
+</UserControl>
