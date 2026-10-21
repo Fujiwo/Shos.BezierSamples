@@ -82,11 +82,11 @@ namespace WpfCad2Lib.Wpf
         void SetAttribute(FrameworkElement element, bool isFilled)
         {
             var shape = element as Shape;
-            if (shape != null) {
+            if (shape is not null) {
                 SetShapeAttribute(shape, StrokeThickness, StrokeColor, FillColor, isFilled);
             } else {
                 var text = element as OutlineText;
-                if (text != null)
+                if (text is not null)
                     SetTextAttribute(text, StrokeThickness, FontSize, FillColor, isFilled);
             }
         }

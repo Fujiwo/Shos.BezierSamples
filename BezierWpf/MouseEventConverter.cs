@@ -15,10 +15,10 @@ namespace BezierWpf
 
     class MouseEventConverter
     {
-        public event Action<Point> Click    ;
-        public event Action<Point> DragStart;
-        public event Action<Point> Dragging ;
-        public event Action<Point> DragEnd  ;
+        public event Action<Point>? Click    ;
+        public event Action<Point>? DragStart;
+        public event Action<Point>? Dragging ;
+        public event Action<Point>? DragEnd  ;
 
         const double dragStartLength   = 10.0;
 
@@ -82,19 +82,19 @@ namespace BezierWpf
 
         void RaiseClick(Point position)
         {
-            if (Click != null)
+            if (Click is not null)
                 Click(position);
         }
 
         void RaiseDragStart(Point position)
         {
-            if (DragStart != null)
+            if (DragStart is not null)
                 DragStart(position);
         }
 
         void RaiseDragging(Point position)
         {
-            if (Dragging != null)
+            if (Dragging is not null)
                 Dragging(position);
         }
 
@@ -107,7 +107,7 @@ namespace BezierWpf
 
         void RaiseDragEnd(Point position)
         {
-            if (DragEnd != null)
+            if (DragEnd is not null)
                 DragEnd(position);
         }
     }

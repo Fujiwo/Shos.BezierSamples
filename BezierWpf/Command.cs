@@ -40,7 +40,7 @@ namespace BezierWpf
 
         public override void OnDragging(Point position)
         {
-            if (Shape == null) {
+            if (Shape is null) {
                 Shape = CreateShape();
                 SetAttribute(Shape);
                 Model?.Add(Shape);

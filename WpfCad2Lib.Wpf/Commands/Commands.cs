@@ -9,7 +9,7 @@ namespace WpfCad2Lib.Wpf
     
         public override void OnClick(Point position)
         {
-            if (Model != null && ElementCollection != null)
+            if (Model is not null && ElementCollection is not null)
                 Model.Select(ElementCollection, position);
         }
     }

@@ -21,7 +21,7 @@ namespace WpfCad2Lib.Wpf
 
             UndoData(UndoType type, Figure? olderFigure, Figure? newerFigure)
             {
-                //if (olderFigure != null)
+                //if (olderFigure is not null)
                 //    olderFigure.IsSelected = false;
                 Type        = type;
                 OlderFigure = olderFigure;
@@ -83,7 +83,7 @@ namespace WpfCad2Lib.Wpf
 
             public IEnumerable<UndoData> Undo()
             {
-                for (var undoData = Pop(); undoData != null; undoData = Pop()) {
+                for (var undoData = Pop(); undoData is not null; undoData = Pop()) {
                     yield return undoData;
                     if (undoData.IsStart)
                         break;
@@ -92,7 +92,7 @@ namespace WpfCad2Lib.Wpf
 
             public IEnumerable<UndoData> Redo()
             {
-                for (var undoData = Forward(); undoData != null; undoData = Forward()) {
+                for (var undoData = Forward(); undoData is not null; undoData = Forward()) {
                     yield return undoData;
                     if (CanForward && data[current].IsStart)
                         break;
@@ -197,15 +197,15 @@ namespace WpfCad2Lib.Wpf
         {
             switch (_undoData.Type) {
                 case UndoData.UndoType.Add:
-                    if (_undoData.NewerFigure != null)
+                    if (_undoData.NewerFigure is not null)
                         figures.Remove(_undoData.NewerFigure);
                     break;
                 case UndoData.UndoType.Remove:
-                    if (_undoData.OlderFigure != null)
+                    if (_undoData.OlderFigure is not null)
                         figures.Add(_undoData.OlderFigure);
                     break;
                 case UndoData.UndoType.Update:
-                    if (_undoData.OlderFigure != null && _undoData.NewerFigure != null) {
+                    if (_undoData.OlderFigure is not null && _undoData.NewerFigure is not null) {
                         int index = figures.IndexOf(_undoData.NewerFigure);
                         if (index >= 0) {
                             figures.Insert(index, _undoData.OlderFigure);
@@ -222,15 +222,15 @@ namespace WpfCad2Lib.Wpf
         {
             switch (_undoData.Type) {
                 case UndoData.UndoType.Add:
-                    if (_undoData.NewerFigure != null)
+                    if (_undoData.NewerFigure is not null)
                         figures.Add(_undoData.NewerFigure);
                     break;
                 case UndoData.UndoType.Remove:
-                    if (_undoData.OlderFigure != null)
+                    if (_undoData.OlderFigure is not null)
                         figures.Remove(_undoData.OlderFigure);
                     break;
                 case UndoData.UndoType.Update:
-                    if (_undoData.OlderFigure != null && _undoData.NewerFigure != null) {
+                    if (_undoData.OlderFigure is not null && _undoData.NewerFigure is not null) {
                         int index = figures.IndexOf(_undoData.OlderFigure);
                         if (index >= 0) {
                             figures.Insert(index, _undoData.NewerFigure);

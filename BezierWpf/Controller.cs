@@ -7,11 +7,11 @@ namespace BezierWpf
 {
     public class Controller : IMouseAccepter
     {
-        Command command = null;
+        Command? command = null;
 
-        public UIElementCollection Model { private get; set; }
+        public UIElementCollection? Model { private get; set; }
 
-        public Command Command
+        public Command? Command
         {
             private get
             {
@@ -20,31 +20,32 @@ namespace BezierWpf
             set
             {
                 command = value;
-                command.Model = Model;
+                if (command is not null)
+                    command.Model = Model;
             }
         }
 
         public void OnClick(Point position)
         {
-            if (Command != null)
+            if (Command is not null)
                 Command.OnClick(position);
         }
 
         public void OnDragStart(Point position)
         {
-            if (Command != null)
+            if (Command is not null)
                 Command.OnDragStart(position);
         }
 
         public void OnDragging(Point position)
         {
-            if (Command != null)
+            if (Command is not null)
                 Command.OnDragging(position);
         }
 
         public void OnDragEnd(Point position)
         {
-            if (Command != null)
+            if (Command is not null)
                 Command.OnDragEnd(position);
         }
     }

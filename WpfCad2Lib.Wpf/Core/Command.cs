@@ -28,13 +28,13 @@ namespace WpfCad2Lib.Wpf
 
         public override void OnClick(Point position)
         {
-            if (ElementCollection == null)
+            if (ElementCollection is null)
                 return;
 
-            if (Figure == null)
+            if (Figure is null)
                 InitializeFigure();
 
-            if (Figure != null && Figure.IsValid) {
+            if (Figure is not null && Figure.IsValid) {
                 Figure.AddElements(ElementCollection, position);
                 Model?.Add(Figure);
             }
@@ -50,10 +50,10 @@ namespace WpfCad2Lib.Wpf
 
         public override void OnDragging(Point position)
         {
-            if (ElementCollection == null)
+            if (ElementCollection is null)
                 return;
 
-            if (Figure == null) {
+            if (Figure is null) {
                 InitializeFigure();
                 Figure?.AddElements(ElementCollection, StartPosition);
             }
@@ -63,7 +63,7 @@ namespace WpfCad2Lib.Wpf
 
         public override void OnDragEnd(Point position)
         {
-            if (ElementCollection == null || Figure == null)
+            if (ElementCollection is null || Figure is null)
                 return;
 
             Figure.SetNext(position);
@@ -80,7 +80,7 @@ namespace WpfCad2Lib.Wpf
         void InitializeFigure()
         {
             Figure = CreateFigure();
-            if (Model != null)
+            if (Model is not null)
                 Figure.Attribute = (FigureAttribute)Model.FigureAttribute.Clone();
         }
     }

@@ -37,7 +37,7 @@ namespace WpfCad2Lib.Wpf
             set
             {
                 controller                   = value;
-                Debug.Assert(model != null);
+                Debug.Assert(model is not null);
                 controller.Model             = model;
                 controller.ElementCollection = canvas.Children;
                 InitializeInputEventHandlers();
@@ -122,7 +122,7 @@ namespace WpfCad2Lib.Wpf
             //    matrix.Scale(ActualWidth / firstActualSize.Width, ActualHeight / firstActualSize.Height);
             //    matrixTransform.Matrix = matrix;
             //}
-            if (model == null)
+            if (model is null)
                 return;
             device.ModelArea       = model.Area;
             device.ViewArea        = Area;

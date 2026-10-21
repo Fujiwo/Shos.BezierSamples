@@ -28,7 +28,7 @@ namespace BezierWinForm
         public void OnMouseMove(PointF point)
         {
             if (bezierLine is not null) {
-                if (bezierLine.Add(point) && Update != null)
+                if (bezierLine.Add(point) && Update is not null)
                     Update(this);
             }
         }

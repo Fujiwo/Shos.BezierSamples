@@ -46,7 +46,7 @@ namespace WpfCad2Lib.Wpf
         public void AddElements(UIElementCollection elementCollection)
         {
             SetElements();
-            if (elements == null)
+            if (elements is null)
                 return;
             elements.ForEach(element => elementCollection.Add(element));
         }
@@ -54,7 +54,7 @@ namespace WpfCad2Lib.Wpf
         public void AddElements(UIElementCollection elementCollection, Point firstPoint)
         {
             InitializeElements();
-            if (elements == null)
+            if (elements is null)
                 return;
             elements.ForEach(element => elementCollection.Add(element));
             SetFirst(elements, firstPoint);
@@ -62,7 +62,7 @@ namespace WpfCad2Lib.Wpf
 
         public void RemoveElements(UIElementCollection elementCollection)
         {
-            if (elements == null)
+            if (elements is null)
                 return;
             elements.ForEach(element => elementCollection.Remove(element));
             elements = null;
@@ -87,7 +87,7 @@ namespace WpfCad2Lib.Wpf
 
         void RemoveSelectors(UIElementCollection elementCollection)
         {
-            if (selectors == null)
+            if (selectors is null)
                 return;
             selectors.ForEach(element => elementCollection.Remove(element));
             selectors = null;
@@ -95,7 +95,7 @@ namespace WpfCad2Lib.Wpf
 
         public void SetNext(Point point)
         {
-            if (elements == null)
+            if (elements is null)
                 return;
             SetNext(elements, point);
         }
@@ -120,7 +120,7 @@ namespace WpfCad2Lib.Wpf
         protected virtual bool IsNearBounds(Point point, double nearDistance)
         {
             var bounds = Bounds;
-            if (bounds == null)
+            if (bounds is null)
                 return false;
             var inflatedBounds = Rect.Inflate(bounds.Value, nearDistance, nearDistance);
             return inflatedBounds.Contains(point);
@@ -179,9 +179,9 @@ namespace WpfCad2Lib.Wpf
         void OnAttributeChanged()
         {
             var newElements = RegetElements();
-            if (newElements != null)
+            if (newElements is not null)
                 elements = newElements.ToList();
-            if (elements != null)
+            if (elements is not null)
                 attribute.SetAttribute(elements, IsFilled);
         }
 

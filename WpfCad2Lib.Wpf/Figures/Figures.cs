@@ -283,7 +283,7 @@ namespace WpfCad2Lib.Wpf
         protected override double GetDistance(Point point, double nearDistance)
         {
             var bounds = Bounds;
-            return bounds == null ? double.MaxValue : Geo.Distance(point, bounds.Value, true);
+            return bounds is null ? double.MaxValue : Geo.Distance(point, bounds.Value, true);
         }
 
         protected override IEnumerable<Point> SelectorPoints

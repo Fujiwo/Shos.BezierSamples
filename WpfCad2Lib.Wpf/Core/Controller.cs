@@ -17,8 +17,8 @@ namespace WpfCad2Lib.Wpf
             {
                 command = value;
 
-                Debug.Assert(Model != null);
-                Debug.Assert(ElementCollection != null);
+                Debug.Assert(Model is not null);
+                Debug.Assert(ElementCollection is not null);
 
                 command.Model             = Model;
                 command.ElementCollection = ElementCollection;
@@ -30,25 +30,25 @@ namespace WpfCad2Lib.Wpf
         {
             Debug.WriteLine("Controller.OnClick({0}, {1})", position.X, position.Y);
 
-            if (command != null && command.canClick)
+            if (command is not null && command.canClick)
                 command.OnClick(position);
         }
 
         public void OnDragStart(Point position)
         {
-            if (command != null && command.canDrag)
+            if (command is not null && command.canDrag)
                 command.OnDragStart(position);
         }
 
         public void OnDragging(Point position)
         {
-            if (command != null && command.canDrag)
+            if (command is not null && command.canDrag)
                 command.OnDragging(position);
         }
 
         public void OnDragEnd(Point position)
         {
-            if (command != null && command.canDrag)
+            if (command is not null && command.canDrag)
                 command.OnDragEnd(position);
         }
     }

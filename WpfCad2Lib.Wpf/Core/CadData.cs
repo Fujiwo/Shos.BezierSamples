@@ -66,7 +66,7 @@ namespace WpfCad2Lib.Wpf
         public void Select(UIElementCollection elementCollection, Point position, double nearDistance)
         {
             var figure = Find(position, nearDistance);
-            if (figure == null)
+            if (figure is null)
                 SelectAll(elementCollection, false);
             else
                 Select(elementCollection, figure);

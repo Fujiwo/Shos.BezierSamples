@@ -12,7 +12,7 @@ namespace BezierWpf
     public partial class View : UserControl
     {
         MouseEventConverter mouseEventConverter = new MouseEventConverter();
-        IMouseAccepter      controller          = null;
+        IMouseAccepter?     controller          = null;
 
         public IMouseAccepter Controller
         {
@@ -110,6 +110,8 @@ namespace BezierWpf
 
         void InitializeInputEventHandlers()
         {
+            if (controller is null)
+                return;
             mouseEventConverter.Click     += controller.OnClick    ;
             mouseEventConverter.DragStart += controller.OnDragStart;
             mouseEventConverter.Dragging  += controller.OnDragging ;

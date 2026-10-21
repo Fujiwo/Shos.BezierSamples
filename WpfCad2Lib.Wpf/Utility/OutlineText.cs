@@ -12,7 +12,7 @@ namespace WpfCad2Lib.Wpf
         public OutlineText() => Effect = Common.DefaultShadowEffect;
 
 		protected override Size MeasureOverride(Size a)
-			=> textHighLightGeometry == null ? new Size(0, 0) : textHighLightGeometry.Bounds.Size;
+			=> textHighLightGeometry is null ? new Size(0, 0) : textHighLightGeometry.Bounds.Size;
 
         static void OnOutlineTextInvalidated(DependencyObject d, DependencyPropertyChangedEventArgs e)
 			=> ((OutlineText)d).CreateText();

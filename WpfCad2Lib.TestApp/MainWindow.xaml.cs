@@ -88,7 +88,7 @@ namespace WpfCad2Lib.TestApp
         void SettingSize(object sender, RoutedEventArgs e)
         {
             var menuItem = sender as MenuItem;
-            if (menuItem != null) {
+            if (menuItem is not null) {
                 switch (menuItem.Header.ToString()) {
                     case "大":
                         mvc.Model.FigureAttribute.StrokeThickness = Common.DefaultStrokeThickness * 2.0;
@@ -109,7 +109,7 @@ namespace WpfCad2Lib.TestApp
         void SettingColor(object sender, RoutedEventArgs e)
         {
             var menuItem = sender as MenuItem;
-            if (menuItem != null) {
+            if (menuItem is not null) {
                 switch (menuItem.Header.ToString()) {
                     case "赤": mvc.Model.FigureAttribute.SetColor(Colors.Red  ); break;
                     case "緑": mvc.Model.FigureAttribute.SetColor(Colors.Green); break;
