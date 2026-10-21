@@ -30,7 +30,7 @@ msbuild Shos.BezierSamples.sln                   # C++ / .NET Framework を含�
 ## アーキテクチャ
 
 - **BezierWinForm**: `Model` / `Controller` / `View` をデザイナーで配置する `Component` として実装した MVC。`Controller` はドラッグ中の `BezierLine` を保持して `Update` イベントで `View` に直接描画させ、MouseUp で `Model.Add` → `Model.Update` → `View.Invalidate` で全体を再描画する。
-- **BezierWpf**: `MouseEventConverter` がマウスイベントをクリック/ドラッグ (`IMouseAccepter`: `OnClick` / `OnDragStart` / `OnDragging` / `OnDragEnd`) に変換し、`Controller` が現在の `Command` (Edit / 線分 / 矩形 / 曲線など) に委譲する。図形は WPF の `Shape` として `UIElementCollection` に直接追加する。
+- **BezierWpf**: `MouseEventConverter` がマウスイベントをクリック/ドラッグ (`IMouseAcceptor`: `OnClick` / `OnDragStart` / `OnDragging` / `OnDragEnd`) に変換し、`Controller` が現在の `Command` (Edit / 線分 / 矩形 / 曲線など) に委譲する。図形は WPF の `Shape` として `UIElementCollection` に直接追加する。
 - **WpfCad2Lib.Wpf**: BezierWpf の構造を発展させたもの。`MVC` クラスが `View` (XAML UserControl) ・`Model`・`Controller` を結線し、`mvc.Command = new LineCommand()` のように描画モードを切り替える。`AddCommand` が `CreateFigure()` で `Figure` を生成し、`Model.FigureAttribute` を複製して適用する。Undo は `Core/CadUndo.cs`、図形の実装は `Figures/Figures.cs`。
 - **WpfCad2Lib.TestApp**: `RoutedCommand` からツールバー操作を `mvc.Command` に割り当て、`Resources/sample.jpg` を背景に表示する。
 
