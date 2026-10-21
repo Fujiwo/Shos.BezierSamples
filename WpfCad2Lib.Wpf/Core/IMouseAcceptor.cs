@@ -3,7 +3,7 @@ using System.Windows.Controls;
 
 namespace WpfCad2Lib.Wpf
 {
-    public interface IMouseAccepter
+    public interface IMouseAcceptor
     {
         Model               Model             { set; }
         UIElementCollection ElementCollection { set; }

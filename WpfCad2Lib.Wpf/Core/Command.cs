@@ -5,13 +5,13 @@ using System.Windows.Controls;
 
 namespace WpfCad2Lib.Wpf
 {
-    public abstract class Command : IMouseAccepter
+    public abstract class Command : IMouseAcceptor
     {
         public Model?               Model             { protected get; set; }
         public UIElementCollection? ElementCollection { protected get; set; }
 
-        public virtual bool canClick { get { return false; } }
-        public virtual bool canDrag  { get { return true ; } }
+        public virtual bool CanClick { get { return false; } }
+        public virtual bool CanDrag  { get { return true ; } }
 
         public virtual bool OnStart() { return true; }
 
@@ -66,7 +66,7 @@ namespace WpfCad2Lib.Wpf
             if (ElementCollection is null || Figure is null)
                 return;
 
-            Figure.SetNext(position);
+            Figure.SetLast(position);
             if (!Figure.IsValid)
                 Figure.RemoveElements(ElementCollection);
             else

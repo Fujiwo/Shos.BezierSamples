@@ -91,15 +91,13 @@ namespace WpfCad2Lib.Wpf
 
         public Figure? Find(Point point, double nearDistance)
         {
-            Figure? result   	   = null;
-            double minimumDistance = double.MaxValue;
+            Figure? result          = null;
+            double  minimumDistance = double.MaxValue;
 
-            figures.Aggregate(minimumDistance,
-                (minDistance, figure) => {
-                    if (figure.IsNear(point, nearDistance, ref minDistance))
-                        result = figure;
-                    return minDistance;
-                });
+            foreach (var figure in figures) {
+                if (figure.IsNear(point, nearDistance, ref minimumDistance))
+                    result = figure;
+            }
             return result;
         }
 

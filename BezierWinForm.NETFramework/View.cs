@@ -8,16 +8,19 @@ namespace BezierWinForm
     {
         public Model DataSource { get; set; }
 
+        IDrawable dragging = null;
+
         public View()
         {
             InitializeComponent();
+            DoubleBuffered = true;
         }
 
+        // ドラッグ中の曲線も OnPaint で確定済みの図形と同じ設定 (アンチエイリアス) で描く
         public void OnUpdateController(IDrawable drawable)
         {
-            using (var graphics = CreateGraphics()) {
-                drawable.Draw(graphics);
-            }
+            dragging = drawable;
+            Invalidate();
         }
 
         public void OnUpdateModel(IDrawable drawable)
@@ -27,12 +30,13 @@ namespace BezierWinForm
 
         void OnPaint(object sender, PaintEventArgs e)
         {
-            if (DataSource == null)
-                return;
-
             SetAntiAlias(e.Graphics);
-            foreach (var figure in DataSource)
-                figure.Draw(e.Graphics);
+            if (DataSource != null) {
+                foreach (var figure in DataSource)
+                    figure.Draw(e.Graphics);
+            }
+            if (dragging != null)
+                dragging.Draw(e.Graphics);
         }
 
         static void SetAntiAlias(Graphics graphics)

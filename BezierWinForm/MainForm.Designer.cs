@@ -38,9 +38,8 @@
             this.view.DataSource = this.model;
             this.view.Dock = System.Windows.Forms.DockStyle.Fill;
             this.view.Location = new System.Drawing.Point(0, 0);
-            this.view.Margin = new System.Windows.Forms.Padding(32, 27, 32, 27);
             this.view.Name = "view";
-            this.view.Size = new System.Drawing.Size(1849, 1683);
+            this.view.Size = new System.Drawing.Size(800, 600);
             this.view.TabIndex = 0;
             // 
             // controller
@@ -49,11 +48,10 @@
             // 
             // BezierWinForm
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(19F, 36F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1849, 1683);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
+            this.ClientSize = new System.Drawing.Size(800, 600);
             this.Controls.Add(this.view);
-            this.Margin = new System.Windows.Forms.Padding(10, 9, 10, 9);
             this.Name = "BezierWinForm";
             this.Text = "BezierWinForm";
             this.ResumeLayout(false);

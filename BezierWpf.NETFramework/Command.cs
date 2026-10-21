@@ -6,7 +6,7 @@ using System.Windows.Shapes;
 
 namespace BezierWpf
 {
-    public abstract class Command : IMouseAccepter
+    public abstract class Command : IMouseAcceptor
     {
         public UIElementCollection Model { protected get; set; }
 
@@ -25,7 +25,7 @@ namespace BezierWpf
 
         static Brush Stroke
         {
-            get { return new SolidColorBrush(Colors.Black); }
+            get { return Brushes.Black; }
         }
 
         protected Point StartPosition { get; private set; }
@@ -51,13 +51,18 @@ namespace BezierWpf
 
         public override void OnDragEnd(Point position)
         {
-            Reshape(position);
+            ReshapeLast(position);
             Shape = null;
         }
 
         protected virtual void OnStart() {}
         protected abstract Shape CreateShape();
         protected abstract void Reshape(Point position);
+
+        protected virtual void ReshapeLast(Point position)
+        {
+            Reshape(position);
+        }
 
         void SetAttribute(Shape shape)
         {
@@ -90,7 +95,8 @@ namespace BezierWpf
         protected override void Reshape(Point position)
         {
             var rect = new Rect(StartPosition, position);
-            ((Rectangle)Shape).Margin = new Thickness { Left = rect.Left, Top = rect.Top };
+            Canvas.SetLeft(Shape, rect.Left);
+            Canvas.SetTop (Shape, rect.Top );
             ((Rectangle)Shape).Width  = rect.Width ;
             ((Rectangle)Shape).Height = rect.Height;
         }
@@ -119,6 +125,18 @@ namespace BezierWpf
                 if ((position - lastPosition).Length > sensitivity)
                     positions.Add(position);
             }
+            if (positions.Count > 2)
+                ((Path)Shape).Data = GraphicHelper.BezierPathGeometry(positions);
+        }
+
+        // ドラッグの終点は間隔に関係なく必ず通るようにする (直前の点に近すぎる場合はその点を置き換える)
+        protected override void ReshapeLast(Point position)
+        {
+            var lastPosition = positions[positions.Count - 1];
+            if (positions.Count >= 2 && (position - lastPosition).Length <= sensitivity)
+                positions[positions.Count - 1] = position;
+            else if (position != lastPosition)
+                positions.Add(position);
             if (positions.Count > 2)
                 ((Path)Shape).Data = GraphicHelper.BezierPathGeometry(positions);
         }

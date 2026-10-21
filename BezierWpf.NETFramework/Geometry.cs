@@ -87,7 +87,7 @@ namespace BezierWpf
         //        graphics.DrawBeziers(pen, bezierPoints);
 
         //    //for (var index = 0; index < points.Length - 3; index++) {
-        //    //    var bezierPoints = Geometry.ToBezier(points[index], points[index + 1], points[index + 2], points[index + 3]).ToArray();
+        //    //    var bezierPoints = Geo.ToBezier(points[index], points[index + 1], points[index + 2], points[index + 3]).ToArray();
         //    //    if (bezierPoints.Length >= 4)
         //    //        graphics.DrawBezier(pen, bezierPoints[0], bezierPoints[1], bezierPoints[2], bezierPoints[3]);
         //    //}
@@ -97,11 +97,11 @@ namespace BezierWpf
         //}
     }
 
-    public static class Geometry
+    public static class Geo
     {
         public static IEnumerable<Point> ToBezier(Point point1, Point point2, Point point3, Point point4)
         {
-            const float a = 1.0f / 3.0f / 2.0f;
+            const double a = 1.0 / 6.0;
 
             yield return point2;
             yield return point2.Add(point3.Subtract(point1).Multiply(a));
@@ -116,7 +116,7 @@ namespace BezierWpf
     public static class GeometryExtensions
     {
         public static Point Center(this Rect rect)
-        { return new Point { X = Geometry.Average(rect.Left, rect.Right), Y = Geometry.Average(rect.Top, rect.Bottom) }; }
+        { return new Point { X = Geo.Average(rect.Left, rect.Right), Y = Geo.Average(rect.Top, rect.Bottom) }; }
 
         public static double Distance(this Point point1, Point point2)
         { return point1.Subtract(point2).Absolute(); }
@@ -148,7 +148,7 @@ namespace BezierWpf
                 foreach (var point in points)
                     yield return point;
             } else { 
-                const float a = 1.0f / 3.0f / 2.0f;
+                const double a = 1.0 / 6.0;
                 yield return points[1];
                 for (var index = 0; index < points.Count - 3; index++) {
                     yield return points[index + 1].Add(points[index + 2].Subtract(points[index + 0]).Multiply(a));

@@ -5,11 +5,25 @@ using System.Windows.Shapes;
 
 namespace BezierWpf
 {
-    public class Controller : IMouseAccepter
+    public class Controller : IMouseAcceptor
     {
-        Command command = null;
+        Command             command = null;
+        UIElementCollection model   = null;
 
-        public UIElementCollection Model { private get; set; }
+        // Command を設定した後に Model を設定しても Command に伝わるようにする
+        public UIElementCollection Model
+        {
+            private get
+            {
+                return model;
+            }
+            set
+            {
+                model = value;
+                if (command != null)
+                    command.Model = model;
+            }
+        }
 
         public Command Command
         {
@@ -20,7 +34,8 @@ namespace BezierWpf
             set
             {
                 command = value;
-                command.Model = Model;
+                if (command != null)
+                    command.Model = Model;
             }
         }
 

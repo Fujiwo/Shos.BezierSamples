@@ -80,20 +80,21 @@ namespace WpfCad2Lib.TestApp
             mvc.Command = new TextCommand();
         }
 
+        // 表示文字列 (Header) ではなく Tag で分岐する
         void SettingSize(object sender, RoutedEventArgs e)
         {
             var menuItem = sender as MenuItem;
             if (menuItem is not null) {
-                switch (menuItem.Header.ToString()) {
-                    case "大":
+                switch (menuItem.Tag as string) {
+                    case "Large":
                         mvc.Model.FigureAttribute.StrokeThickness = Common.DefaultStrokeThickness * 2.0;
                         mvc.Model.FigureAttribute.FontSize        = Common.DefaultFontSize        * 2.0;
                         break;
-                    case "中":
+                    case "Medium":
                         mvc.Model.FigureAttribute.StrokeThickness = Common.DefaultStrokeThickness;
                         mvc.Model.FigureAttribute.FontSize        = Common.DefaultFontSize       ;
                         break;
-                    case "小":
+                    case "Small":
                         mvc.Model.FigureAttribute.StrokeThickness = Common.DefaultStrokeThickness / 2.0;
                         mvc.Model.FigureAttribute.FontSize        = Common.DefaultFontSize        / 2.0;
                         break;
@@ -103,16 +104,8 @@ namespace WpfCad2Lib.TestApp
 
         void SettingColor(object sender, RoutedEventArgs e)
         {
-            var menuItem = sender as MenuItem;
-            if (menuItem is not null) {
-                switch (menuItem.Header.ToString()) {
-                    case "赤": mvc.Model.FigureAttribute.SetColor(Colors.Red  ); break;
-                    case "緑": mvc.Model.FigureAttribute.SetColor(Colors.Green); break;
-                    case "青": mvc.Model.FigureAttribute.SetColor(Colors.Blue ); break;
-                    case "白": mvc.Model.FigureAttribute.SetColor(Colors.White); break;
-                    case "黒": mvc.Model.FigureAttribute.SetColor(Colors.Black); break;
-                }
-            }
+            if (sender is MenuItem { Tag: Color color })
+                mvc.Model.FigureAttribute.SetColor(color);
         }
 
         void DisplayHome(object sender, RoutedEventArgs e)

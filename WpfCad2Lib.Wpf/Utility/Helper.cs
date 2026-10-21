@@ -12,6 +12,7 @@ namespace WpfCad2Lib.Wpf
             brush.GradientStops.Add(new GradientStop(strokeColor.MultiplyRGB(0.80f), 0.3));
             brush.GradientStops.Add(new GradientStop(strokeColor.MultiplyRGB(0.80f), 0.7));
             brush.GradientStops.Add(new GradientStop(strokeColor.MultiplyRGB(0.65f), 1.0));
+            brush.Freeze();
             return brush;
         }
 
@@ -22,6 +23,7 @@ namespace WpfCad2Lib.Wpf
             brush.GradientStops.Add(new GradientStop(fillColor.Multiply(0.80f), 0.3));
             brush.GradientStops.Add(new GradientStop(fillColor.Multiply(0.80f), 0.7));
             brush.GradientStops.Add(new GradientStop(fillColor.Multiply(0.65f), 1.0));
+            brush.Freeze();
             return brush;
         }
     }

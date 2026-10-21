@@ -4,7 +4,7 @@ using System.Windows.Controls;
 
 namespace WpfCad2Lib.Wpf
 {
-    public class Controller : IMouseAccepter
+    public class Controller : IMouseAcceptor
     {
         Command? command;
 
@@ -30,25 +30,25 @@ namespace WpfCad2Lib.Wpf
         {
             Debug.WriteLine("Controller.OnClick({0}, {1})", position.X, position.Y);
 
-            if (command is not null && command.canClick)
+            if (command is not null && command.CanClick)
                 command.OnClick(position);
         }
 
         public void OnDragStart(Point position)
         {
-            if (command is not null && command.canDrag)
+            if (command is not null && command.CanDrag)
                 command.OnDragStart(position);
         }
 
         public void OnDragging(Point position)
         {
-            if (command is not null && command.canDrag)
+            if (command is not null && command.CanDrag)
                 command.OnDragging(position);
         }
 
         public void OnDragEnd(Point position)
         {
-            if (command is not null && command.canDrag)
+            if (command is not null && command.CanDrag)
                 command.OnDragEnd(position);
         }
     }

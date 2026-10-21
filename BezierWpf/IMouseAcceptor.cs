@@ -3,7 +3,7 @@ using System.Windows.Controls;
 
 namespace BezierWpf
 {
-    public interface IMouseAccepter
+    public interface IMouseAcceptor
     {
         UIElementCollection Model { set; }
 

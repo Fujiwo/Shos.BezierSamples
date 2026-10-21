@@ -13,7 +13,7 @@ namespace WpfCad2Lib.Wpf
         FigureAttribute          attribute = new FigureAttribute();
         List<FrameworkElement>?   elements;
         List<Shape>?              selectors;
-        int                       selected  = -1;
+        bool                      isSelected;
 
         public FigureAttribute Attribute
         {
@@ -31,8 +31,8 @@ namespace WpfCad2Lib.Wpf
 
         public bool IsSelected
         {
-            get { return selected >= 0; }
-            private set { selected = value ? int.MaxValue : -1; }
+            get { return isSelected; }
+            private set { isSelected = value; }
         }
 
         public virtual bool IsValid
@@ -106,6 +106,13 @@ namespace WpfCad2Lib.Wpf
             SetNext(elements, point);
         }
 
+        public void SetLast(Point point)
+        {
+            if (elements is null)
+                return;
+            SetLast(elements, point);
+        }
+
         public bool IsNear(Point point, double nearDistance, ref double minimumDistance)
         {
             if (IsNearBounds(point, nearDistance)) {
@@ -139,6 +146,10 @@ namespace WpfCad2Lib.Wpf
         protected virtual void SetNext(IEnumerable<FrameworkElement> elements, Point point)
         {}
 
+        // ドラッグ終了時の位置。既定では SetNext と同じ
+        protected virtual void SetLast(IEnumerable<FrameworkElement> elements, Point point)
+            => SetNext(elements, point);
+
         void InitializeElements()
         {
             elements = GetInitialElements().ToList();
@@ -147,7 +158,6 @@ namespace WpfCad2Lib.Wpf
         
         IEnumerable<Shape> GetSelectors()
         {
-            var selectorPoints = SelectorPoints;
             foreach (var selectorPoint in SelectorPoints) {
                 var shape = GetSelector(selectorPoint);
                 SetSelectorAttribute(shape);
@@ -158,9 +168,9 @@ namespace WpfCad2Lib.Wpf
         static Shape GetSelector(Point selectorPoint)
         {
             var shape    = new Ellipse();
-            shape.Margin = new Thickness { Left = selectorPoint.X - Common.SelectorRadius,
-                                           Top  = selectorPoint.Y - Common.SelectorRadius };
-            shape.Width  = 
+            Canvas.SetLeft(shape, selectorPoint.X - Common.SelectorRadius);
+            Canvas.SetTop (shape, selectorPoint.Y - Common.SelectorRadius);
+            shape.Width  =
             shape.Height = Common.SelectorRadius * 2.0;
             return shape;
         }

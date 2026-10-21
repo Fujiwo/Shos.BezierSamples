@@ -2,10 +2,12 @@
 #include <windowsx.h>
 #include <tchar.h>
 #include <cassert>
+#include <cmath>
 #include <vector>
-using namespace std;
 
-namespace BezeirWin32 {
+namespace BezierWin32 {
+    using std::vector;
+
     class Win32Geometry
     {
     public:
@@ -26,7 +28,7 @@ namespace BezeirWin32 {
 
         static long Round(double value)
         {
-            return long(::floor(value + 0.5));
+            return long(std::floor(value + 0.5));
         }
     };
 
@@ -51,10 +53,6 @@ namespace BezeirWin32 {
             assert(points.size() >= 4);
             assert((points.size() - 4) % 3 == 0);
             ::MoveToEx(hdc, points[0].x, points[0].y, nullptr);
-            if (points.size() == 2) {
-                ::LineTo(hdc, points[1].x, points[1].y);
-                return;
-            }
             for (auto index = 1U; index + 2 < points.size(); index += 3)
                 ::PolyBezierTo(hdc, points.data() + index, 3);
         }
@@ -93,7 +91,8 @@ namespace BezeirWin32 {
             bool Create(HINSTANCE instanceHandle, int showCommand)
             {
                 MainWindow::instanceHandle = instanceHandle;
-                RegisterClass(instanceHandle);
+                if (!RegisterWindowClass(instanceHandle))
+                    return false;
                 handle = ::CreateWindow(windowClassName, title, WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, instanceHandle, nullptr);
                 if (handle == nullptr)
                     return false;
@@ -107,13 +106,14 @@ namespace BezeirWin32 {
             {
                 WNDCLASSEX wcex;
                 wcex.cbSize = sizeof(WNDCLASSEX);
-                return ::GetClassInfoEx(instanceHandle, windowClassName, &wcex);
+                return ::GetClassInfoEx(instanceHandle, windowClassName, &wcex) != FALSE;
             }
 
-            static bool RegisterClass(HINSTANCE instanceHandle)
+            // RegisterClass は Win32 のマクロ (RegisterClassW) と衝突するため別名にする
+            static bool RegisterWindowClass(HINSTANCE instanceHandle)
             {
                 if (IsClassExisting(instanceHandle))
-                    return false;
+                    return true;
                 WNDCLASSEX wcex;
                 wcex.cbSize = sizeof(WNDCLASSEX);
                 wcex.style = CS_HREDRAW | CS_VREDRAW;
@@ -208,14 +208,14 @@ namespace BezeirWin32 {
             }
         };
     } // namespace Sample
-} // namespace BezeirWin32
+} // namespace BezierWin32
 
 int APIENTRY wWinMain(_In_     HINSTANCE instanceHandle,
     _In_opt_ HINSTANCE previousInstanceHandle,
-    _In_     LPTSTR    commandLine,
+    _In_     LPWSTR    commandLine,
     _In_     int       showCommand)
 {
     UNREFERENCED_PARAMETER(previousInstanceHandle);
     UNREFERENCED_PARAMETER(commandLine);
-    return BezeirWin32::Sample::Application().Run(instanceHandle, showCommand);
+    return BezierWin32::Sample::Application().Run(instanceHandle, showCommand);
 }

@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Linq;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Shapes;
 
@@ -101,7 +102,8 @@ namespace WpfCad2Lib.Wpf
 
         void Set(FrameworkElement element, Rect position)
         {
-            element.Margin = new Thickness { Left = position.Left, Top = position.Top };
+            Canvas.SetLeft(element, position.Left);
+            Canvas.SetTop (element, position.Top );
             element.Width  = position.Width;
             element.Height = position.Height;
         }
@@ -127,6 +129,7 @@ namespace WpfCad2Lib.Wpf
     {
         const double sensitivity = 8.0;
         readonly List<Point> position = new List<Point>();
+        PathFigure?          pathFigure;
 
         protected override Rect? Bounds
         {
@@ -163,28 +166,60 @@ namespace WpfCad2Lib.Wpf
         {
             position.Clear();
             position.Add(point);
+            pathFigure = null;
         }
 
         protected override void SetNext(IEnumerable<FrameworkElement> elements, Point point)
         {
             if (position.Count > 0) {
                 var lastPoint = position[position.Count - 1];
-                if ((point - lastPoint).Length > sensitivity)
+                if ((point - lastPoint).Length > sensitivity) {
                     position.Add(point);
+                    AppendSegment((Path)elements.First());
+                }
             }
-            var element = (Path)elements.First();
-            if (position.Count > 2)
-                element.Data = GeoHelper.BezierPathGeometry(position);
+        }
+
+        // ドラッグの終点は間隔に関係なく必ず通るようにする (直前の点に近すぎる場合はその点を置き換える)
+        protected override void SetLast(IEnumerable<FrameworkElement> elements, Point point)
+        {
+            var lastPoint = position[position.Count - 1];
+            if (position.Count >= 2 && (point - lastPoint).Length <= sensitivity)
+                position[position.Count - 1] = point;
+            else if (point != lastPoint)
+                position.Add(point);
+            Rebuild((Path)elements.First());
+        }
+
+        // 点を 1 つ足すと、末尾の直線が曲線になり、その先に新しい直線が付く。
+        // 毎回全体を作り直すと点数 n に対して O(n²) になるため、末尾だけを差し替える
+        void AppendSegment(Path element)
+        {
+            if (pathFigure is null || position.Count <= 3) {
+                Rebuild(element);
+                return;
+            }
+            var count        = position.Count;
+            var bezierPoints = Geo.ToBezier(position[count - 4], position[count - 3], position[count - 2], position[count - 1]).ToArray();
+            pathFigure.Segments.RemoveAt(pathFigure.Segments.Count - 1);
+            pathFigure.Segments.Add(new BezierSegment(bezierPoints[1], bezierPoints[2], bezierPoints[3], true));
+            pathFigure.Segments.Add(new LineSegment(position[count - 1], true));
+        }
+
+        void Rebuild(Path element)
+        {
+            if (position.Count <= 2) {
+                pathFigure = null;
+                return;
+            }
+            var pathGeometry = GeoHelper.BezierPathGeometry(position);
+            pathFigure       = pathGeometry.Figures[0];
+            element.Data     = pathGeometry;
         }
     }
 
     public class ArrowFigure : Figure
     {
-        public enum Type
-        {
-            WedgePolygon
-        }
-        
         const double rate0 = 200.0;
         const double rate1 = 0.2;
         const double rate2 = 0.15;
@@ -256,8 +291,10 @@ namespace WpfCad2Lib.Wpf
 
     public class TextFigure : Figure
     {
+        public const string DefaultText = "テキスト";
+
         Point  position = new Point();
-        string text     = "テキスト"; //string.Empty;
+        string text     = DefaultText;
 
         public string Text
         {
@@ -304,7 +341,8 @@ namespace WpfCad2Lib.Wpf
             position       = point;
             var element    = (OutlineText)elements.First();
             element.Text   = Text;
-            element.Margin = new Thickness { Left = position.X, Top = position.Y };
+            Canvas.SetLeft(element, position.X);
+            Canvas.SetTop (element, position.Y);
         }
     }
 }

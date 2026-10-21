@@ -28,7 +28,7 @@ namespace WpfCad2Lib.Wpf
 
         double NearDistance
         {
-            get { return Math.Average(Area.Width, Area.Height) * Common.NearDistanceRate; }
+            get { return MathHelper.Average(Area.Width, Area.Height) * Common.NearDistanceRate; }
         }
 
         //IList<Figure> Data

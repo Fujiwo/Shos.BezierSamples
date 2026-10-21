@@ -26,6 +26,7 @@ namespace BezierWinForm
         public void OnMouseDown(PointF point)
         {
             bezierLine = new BezierLine();
+            bezierLine.Add(point);
         }
 
         public void OnMouseMove(PointF point)
@@ -39,7 +40,7 @@ namespace BezierWinForm
         public void OnMouseUp(PointF point)
         {
             if (bezierLine != null) {
-                bezierLine.Add(point);
+                bezierLine.AddLast(point);
                 if (Model != null)
                     Model.Add(bezierLine);
                 bezierLine = null;
@@ -48,7 +49,8 @@ namespace BezierWinForm
 
         public void Draw(Graphics graphics)
         {
-            bezierLine.Draw(graphics);
+            if (bezierLine != null)
+                bezierLine.Draw(graphics);
         }
     }
 }

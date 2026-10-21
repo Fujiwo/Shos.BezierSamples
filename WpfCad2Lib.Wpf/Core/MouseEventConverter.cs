@@ -61,7 +61,7 @@ namespace WpfCad2Lib.Wpf
             lastPosition  = position;
         }
 
-        bool canDragStart(Point position)
+        bool CanDragStart(Point position)
         {
             return (startPosition - position).Length >= dragStartLength;
         }
@@ -73,8 +73,8 @@ namespace WpfCad2Lib.Wpf
                 RaiseDragging(position);
             } else if (isStarted) {
                 draggingPositions.Enqueue(position);
-                if (canDragStart(position)) {
-                    RaizeDraggingWithDraggingPositions();
+                if (CanDragStart(position)) {
+                    RaiseDraggingWithDraggingPositions();
                     isDragging = true;
                 }
             }
@@ -116,7 +116,7 @@ namespace WpfCad2Lib.Wpf
             Dragging?.Invoke(position);
         }
 
-        void RaizeDraggingWithDraggingPositions()
+        void RaiseDraggingWithDraggingPositions()
         {
             RaiseDragStart(startPosition);
             draggingPositions.ForEach(draggingPosition => RaiseDragging(draggingPosition));

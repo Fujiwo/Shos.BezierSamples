@@ -4,8 +4,8 @@ namespace WpfCad2Lib.Wpf
 {
     public class EditCommand : Command
     {
-        public override bool canClick { get { return true; } }
-        public override bool canDrag { get { return false; } }
+        public override bool CanClick { get { return true; } }
+        public override bool CanDrag { get { return false; } }
     
         public override void OnClick(Point position)
         {
@@ -56,20 +56,14 @@ namespace WpfCad2Lib.Wpf
 
     public class TextCommand : AddCommand
     {
-        static string text = string.Empty;
+        public string Text { get; set; } = TextFigure.DefaultText;
 
-        public override bool canClick { get { return true ; } }
-        public override bool canDrag  { get { return false; } }
-
-        public override bool OnStart()
-        {
-            text = "あいうえお";
-            return true;
-        }
+        public override bool CanClick { get { return true ; } }
+        public override bool CanDrag  { get { return false; } }
 
         protected override Figure CreateFigure()
         {
-            return new TextFigure { Text = text };
+            return new TextFigure { Text = Text };
         }
     }
 }

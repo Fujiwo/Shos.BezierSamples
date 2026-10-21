@@ -34,17 +34,20 @@ namespace WpfCad2Lib.Wpf
         public const double          MouseWheelZoomRate      = 1.0 / 8.0;
         public const double          DefaultPanRate          = 1.0 / 8.0;
 
-        public static DropShadowEffect DefaultShadowEffect
+        // 図形ごとに作らず、Freeze した 1 つのインスタンスを共有する
+        public static DropShadowEffect DefaultShadowEffect { get; } = CreateDefaultShadowEffect();
+
+        static DropShadowEffect CreateDefaultShadowEffect()
         {
-            get {
-                return new DropShadowEffect {
-                    ShadowDepth = Common.DefaultShadowDepth     ,
-                    Direction   = Common.DefaultShadowDirection ,
-                    Color       = Common.DefaultShadowColor     ,
-                    Opacity     = Common.DefaultShadowOpacity   ,
-                    BlurRadius  = Common.DefaultShadowBlurRadius
-                };
-            }
+            var effect = new DropShadowEffect {
+                ShadowDepth = Common.DefaultShadowDepth     ,
+                Direction   = Common.DefaultShadowDirection ,
+                Color       = Common.DefaultShadowColor     ,
+                Opacity     = Common.DefaultShadowOpacity   ,
+                BlurRadius  = Common.DefaultShadowBlurRadius
+            };
+            effect.Freeze();
+            return effect;
         }
     }
 }

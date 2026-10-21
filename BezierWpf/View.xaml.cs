@@ -12,12 +12,14 @@ namespace BezierWpf
     public partial class View : UserControl
     {
         MouseEventConverter mouseEventConverter = new MouseEventConverter();
-        IMouseAccepter?     controller          = null;
+        IMouseAcceptor?     controller          = null;
 
-        public IMouseAccepter Controller
+        public IMouseAcceptor Controller
         {
             set
             {
+                if (controller is not null)
+                    RemoveInputEventHandlers();
                 controller       = value;
                 controller.Model = canvas.Children;
                 InitializeInputEventHandlers();
@@ -83,7 +85,7 @@ namespace BezierWpf
         //    var count = random.Next(10);
 
         //    for (int index = 0; index < count; index++) {
-        //        var d = GetRandomPoint(Geometry.Average(area.Width, area.Height) / 10.0);
+        //        var d = GetRandomPoint(Geo.Average(area.Width, area.Height) / 10.0);
         //        var newPoint = point.Add(d);
         //        if (area.Contains(newPoint)) {
         //            point = newPoint;
@@ -117,6 +119,16 @@ namespace BezierWpf
             mouseEventConverter.DragStart += controller.OnDragStart;
             mouseEventConverter.Dragging  += controller.OnDragging ;
             mouseEventConverter.DragEnd   += controller.OnDragEnd  ;
+        }
+
+        void RemoveInputEventHandlers()
+        {
+            if (controller is null)
+                return;
+            mouseEventConverter.Click     -= controller.OnClick    ;
+            mouseEventConverter.DragStart -= controller.OnDragStart;
+            mouseEventConverter.Dragging  -= controller.OnDragging ;
+            mouseEventConverter.DragEnd   -= controller.OnDragEnd  ;
         }
     }
 }

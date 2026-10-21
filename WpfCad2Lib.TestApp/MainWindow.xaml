@@ -33,16 +33,16 @@
             </MenuItem>
             <MenuItem Header="設定">
                 <MenuItem Header="サイズ">
-                    <MenuItem Header="大" Click="SettingSize" />
-                    <MenuItem Header="中" Click="SettingSize" />
-                    <MenuItem Header="小" Click="SettingSize" />
+                    <MenuItem Header="大" Tag="Large"  Click="SettingSize" />
+                    <MenuItem Header="中" Tag="Medium" Click="SettingSize" />
+                    <MenuItem Header="小" Tag="Small"  Click="SettingSize" />
                 </MenuItem>
                 <MenuItem Header="色">
-                    <MenuItem Header="赤" Click="SettingColor" />
-                    <MenuItem Header="緑" Click="SettingColor" />
-                    <MenuItem Header="青" Click="SettingColor" />
-                    <MenuItem Header="白" Click="SettingColor" />
-                    <MenuItem Header="黒" Click="SettingColor" />
+                    <MenuItem Header="赤" Tag="{x:Static Colors.Red  }" Click="SettingColor" />
+                    <MenuItem Header="緑" Tag="{x:Static Colors.Green}" Click="SettingColor" />
+                    <MenuItem Header="青" Tag="{x:Static Colors.Blue }" Click="SettingColor" />
+                    <MenuItem Header="白" Tag="{x:Static Colors.White}" Click="SettingColor" />
+                    <MenuItem Header="黒" Tag="{x:Static Colors.Black}" Click="SettingColor" />
                 </MenuItem>
             </MenuItem>
             <MenuItem Header="画面">

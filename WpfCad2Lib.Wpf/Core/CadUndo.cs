@@ -177,17 +177,17 @@ namespace WpfCad2Lib.Wpf
         public bool Undo(IList<Figure> figures)
         {
             // UndoBuffer.Undo() は列挙するたびに Pop するため、先に確定させてから使う
-            var popedFigures = undoBuffer.Undo().ToList();
-            popedFigures.ForEach(popedFigure => Undo(figures, popedFigure));
-            return popedFigures.Count > 0;
+            var poppedFigures = undoBuffer.Undo().ToList();
+            poppedFigures.ForEach(poppedFigure => Undo(figures, poppedFigure));
+            return poppedFigures.Count > 0;
         }
 
         public bool Redo(IList<Figure> figures)
         {
             // UndoBuffer.Redo() は列挙するたびに Forward するため、先に確定させてから使う
-            var popedFigures = undoBuffer.Redo().ToList();
-            popedFigures.ForEach(popedFigure => Redo(figures, popedFigure));
-            return popedFigures.Count > 0;
+            var poppedFigures = undoBuffer.Redo().ToList();
+            poppedFigures.ForEach(poppedFigure => Redo(figures, poppedFigure));
+            return poppedFigures.Count > 0;
         }
 
         public void Clear()

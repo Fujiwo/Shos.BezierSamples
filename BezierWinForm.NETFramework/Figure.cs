@@ -26,14 +26,21 @@ namespace BezierWinForm
             //return true;
         }
 
+        // ドラッグの終点は間隔に関係なく必ず通るようにする (直前の点に近すぎる場合はその点を置き換える)
+        public void AddLast(PointF point)
+        {
+            if (position.Count >= 2 && !point.IsValidForBezier(position, minimumDistance))
+                position[position.Count - 1] = point;
+            else if (position.Count == 0 || position[position.Count - 1] != point)
+                position.Add(point);
+        }
+
         public override void Draw(Graphics graphics)
         {
-            using (var pen = new Pen(Color.Black)) {
-                //if (position.Count > 2)
-                //    graphics.DrawCurve(pen, position.ToArray());
-                GraphicHelper.DrawBezierLine(graphics, pen, position.ToArray());
-                //GraphicHelper.DrawBezierPolygon(graphics, pen, position.ToArray());
-            }
+            //if (position.Count > 2)
+            //    graphics.DrawCurve(Pens.Black, position.ToArray());
+            GraphicHelper.DrawBezierLine(graphics, Pens.Black, position.ToArray());
+            //GraphicHelper.DrawBezierPolygon(graphics, Pens.Black, position.ToArray());
         }
 
     }

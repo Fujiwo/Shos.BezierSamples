@@ -73,7 +73,7 @@ namespace WpfCad2Lib.Wpf
     {
         public static IEnumerable<Point> ToBezier(Point point1, Point point2, Point point3, Point point4)
         {
-            const float a = 1.0f / 3.0f / 2.0f;
+            const double a = 1.0 / 6.0;
 
             yield return point2;
             yield return point2 + Vector.Multiply(point3 - point1, a);
@@ -110,17 +110,18 @@ namespace WpfCad2Lib.Wpf
 
         public static Rect? ToRect(this IEnumerable<Point> points)
         {
-            if (points.Count() <= 0)
-                return null;
-
+            var hasPoint = false;
             double minimumX = double.MaxValue, minimumY = double.MaxValue, maximumX = -double.MaxValue, maximumY = -double.MaxValue;
 
             foreach (var point in points) {
+                hasPoint = true;
                 if (point.X < minimumX) minimumX = point.X;
                 if (point.X > maximumX) maximumX = point.X;
                 if (point.Y < minimumY) minimumY = point.Y;
                 if (point.Y > maximumY) maximumY = point.Y;
             }
+            if (!hasPoint)
+                return null;
             return new Rect(minimumX, minimumY, maximumX - minimumX, maximumY - minimumY);
         }
 
@@ -174,17 +175,15 @@ namespace WpfCad2Lib.Wpf
 
         public static double Distance(Point point, IEnumerable<Point> points)
         {
-            var minimumDistance = double.MaxValue;
-            if (points.Count() > 0) {
-                var startPoint = points.First();
-                points.Skip(1).ForEach(
-                    aPoint => {
-                        var distance = Distance(point, new LineGeometry(startPoint, aPoint));
-                        if (distance < minimumDistance)
-                            minimumDistance = distance;
-                        startPoint = aPoint;
-                    }
-                );
+            var    minimumDistance = double.MaxValue;
+            Point? startPoint      = null;
+            foreach (var aPoint in points) {
+                if (startPoint is not null) {
+                    var distance = Distance(point, new LineGeometry(startPoint.Value, aPoint));
+                    if (distance < minimumDistance)
+                        minimumDistance = distance;
+                }
+                startPoint = aPoint;
             }
             return minimumDistance;
         }
@@ -233,7 +232,7 @@ namespace WpfCad2Lib.Wpf
                 foreach (var point in points)
                     yield return point;
             } else { 
-                const float a = 1.0f / 3.0f / 2.0f;
+                const double a = 1.0 / 6.0;
                 yield return points[1];
                 for (var index = 0; index < points.Count - 3; index++) {
                     yield return points[index + 1] + Vector.Multiply(points[index + 2] - points[index + 0], a);

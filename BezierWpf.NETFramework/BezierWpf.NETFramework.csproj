@@ -57,7 +57,7 @@
     <Compile Include="Command.cs" />
     <Compile Include="Controller.cs" />
     <Compile Include="Geometry.cs" />
-    <Compile Include="IMouseAccepter.cs" />
+    <Compile Include="IMouseAcceptor.cs" />
     <Compile Include="MouseEventConverter.cs" />
     <Compile Include="Utility.cs" />
     <Compile Include="View.xaml.cs">

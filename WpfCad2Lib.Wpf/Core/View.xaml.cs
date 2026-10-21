@@ -36,6 +36,8 @@ namespace WpfCad2Lib.Wpf
         {
             set
             {
+                if (controller is not null)
+                    RemoveInputEventHandlers();
                 controller                   = value;
                 Debug.Assert(model is not null);
                 controller.Model             = model;
@@ -74,7 +76,6 @@ namespace WpfCad2Lib.Wpf
         {
             device.Home();
             matrixTransform.Matrix = device.ModelToViewMatrix;
-            var point = new Point() * device.ModelToViewMatrix;
         }
 
         void Zoom(Point zoomCenterModelPoint, double rate)
@@ -101,12 +102,13 @@ namespace WpfCad2Lib.Wpf
             brush.GradientStops.Add(new GradientStop(Colors.Wheat     , 1.0));
             
             var rectangle = new Rectangle {
-                Margin          = new Thickness { Left = model.Area.Left, Top = model.Area.Top },
                 Width           = model.Area.Width ,
                 Height          = model.Area.Height,
                 Stroke          = brush,
                 StrokeThickness = 5.0
             };
+            Canvas.SetLeft(rectangle, model.Area.Left);
+            Canvas.SetTop (rectangle, model.Area.Top );
             canvas.Children.Add(rectangle);
         }
 
@@ -155,7 +157,8 @@ namespace WpfCad2Lib.Wpf
 
         void OnMouseWheel(object sender, MouseWheelEventArgs e)
         {
-            Zoom(e.ToPosition(sender), 1.0 - e.Delta / 120.0 * Common.MouseWheelZoomRate);
+            // ホイールを奥 (Delta > 0) に回すと拡大する
+            Zoom(e.ToPosition(sender), Math.Pow(1.0 + Common.MouseWheelZoomRate, e.Delta / 120.0));
         }
 
         // 子の ScrollViewer やキーボードナビゲーションに矢印キーを奪われないよう、Preview で受けて処理済みにする
@@ -177,6 +180,14 @@ namespace WpfCad2Lib.Wpf
             mouseEventConverter.DragStart += controller.OnDragStart;
             mouseEventConverter.Dragging  += controller.OnDragging ;
             mouseEventConverter.DragEnd   += controller.OnDragEnd  ;
+        }
+
+        void RemoveInputEventHandlers()
+        {
+            mouseEventConverter.Click     -= controller.OnClick    ;
+            mouseEventConverter.DragStart -= controller.OnDragStart;
+            mouseEventConverter.Dragging  -= controller.OnDragging ;
+            mouseEventConverter.DragEnd   -= controller.OnDragEnd  ;
         }
     }
 }
