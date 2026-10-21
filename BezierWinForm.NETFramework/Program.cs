@@ -11,6 +11,7 @@ namespace BezierWinForm
         [STAThread]
         static void Main()
         {
+            // コントロールを OS の視覚スタイルで描き、テキストは GDI (TextRenderer) で描く既定の設定にする。
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new BezierWinForm());

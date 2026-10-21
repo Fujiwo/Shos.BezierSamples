@@ -9,11 +9,20 @@ namespace BezierWpf
     /// <summary>
     /// View.xaml の相互作用ロジック
     /// </summary>
+    /// <remarks>
+    /// MVC の View。図形を表示する Canvas を持ち、Canvas のマウスイベントを <see cref="MouseEventConverter"/> で
+    /// クリック/ドラッグに変換して Controller に渡す。図形は Canvas の子要素として追加されると WPF が自動的に描くので、
+    /// View 自身は描画の処理を持たない。
+    /// </remarks>
     public partial class View : UserControl
     {
         MouseEventConverter mouseEventConverter = new MouseEventConverter();
         IMouseAcceptor      controller          = null;
 
+        /// <summary>
+        /// マウス操作を受け取る Controller。設定すると、Canvas の子要素を Model として渡し、
+        /// 変換後のクリック/ドラッグのイベントの通知先を新しい Controller に付け替える。
+        /// </summary>
         public IMouseAcceptor Controller
         {
             set
@@ -26,6 +35,9 @@ namespace BezierWpf
             }
         }
 
+        /// <summary>
+        /// View を初期化し、Canvas のマウスイベントを MouseEventConverter につなぐ。
+        /// </summary>
         public View()
         {
             InitializeComponent();
@@ -103,6 +115,7 @@ namespace BezierWpf
         //    canvas.Children.Add(path2);
         //}
 
+        // Canvas の生のマウスイベント → MouseEventConverter (Controller が変わっても付け替えないので、コンストラクターで 1 度だけつなぐ)
         void InitializeMouseEventHandlers()
         {
             canvas.MouseLeftButtonDown += mouseEventConverter.OnMouseLeftButtonDown;
@@ -111,6 +124,7 @@ namespace BezierWpf
             canvas.LostMouseCapture    += mouseEventConverter.OnLostMouseCapture   ;
         }
 
+        // MouseEventConverter が変換したクリック/ドラッグ → Controller
         void InitializeInputEventHandlers()
         {
             mouseEventConverter.Click     += controller.OnClick    ;
@@ -119,6 +133,7 @@ namespace BezierWpf
             mouseEventConverter.DragEnd   += controller.OnDragEnd  ;
         }
 
+        // 古い Controller の登録を外す (外さないと、Controller を差し替えたときに古い方にもイベントが届き続ける)
         void RemoveInputEventHandlers()
         {
             if (controller == null)

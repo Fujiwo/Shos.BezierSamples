@@ -1,11 +1,10 @@
 ﻿using System.Windows;
 
-namespace BezierWpf
+namespace BezierWpf;
+
+/// <summary>
+/// App.xaml の相互作用ロジック
+/// </summary>
+public partial class App : Application
 {
-    /// <summary>
-    /// App.xaml の相互作用ロジック
-    /// </summary>
-    public partial class App : Application
-    {
-    }
 }

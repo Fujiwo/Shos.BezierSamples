@@ -129,21 +129,25 @@ n 個の通過点 P0〜P(n−1) では、前後に点がそろっている内側
 
 変換処理は、`[始点, 制御点1, 制御点2, 終点, 制御点1, 制御点2, 終点, …]` の形の点列を返します。
 各 API のベジエ描画関数が受け取る形式と同じです。
-WpfCad2Lib の実装 (`GeoExtensions.ToBezierPolyline`) は次のとおりです (行末のコメントは説明のために足したものです)。
+WpfCad2Lib の実装 (`GeoExtensions.ToBezierPolyline`) は次のとおりです (コメントは説明のために足したものです)。
 
 ```csharp
-public static IEnumerable<Point> ToBezierPolyline(this IList<Point> points)
+// C# 14 の拡張メンバー。points.ToBezierPolyline() の形で呼べる
+extension(IList<Point> points)
 {
-    if (points.Count < 4) {
-        foreach (var point in points)
-            yield return point;
-    } else {
-        const double a = 1.0 / 6.0;
-        yield return points[1];
-        for (var index = 0; index < points.Count - 3; index++) {
-            yield return points[index + 1] + Vector.Multiply(points[index + 2] - points[index + 0], a); // C1
-            yield return points[index + 2] + Vector.Multiply(points[index + 1] - points[index + 3], a); // C2
-            yield return points[index + 2];                                                            // 終点
+    public IEnumerable<Point> ToBezierPolyline()
+    {
+        if (points.Count < 4) {
+            foreach (var point in points)
+                yield return point;
+        } else {
+            const double a = 1.0 / 6.0;
+            yield return points[1];
+            for (var index = 0; index < points.Count - 3; index++) {
+                yield return points[index + 1] + Vector.Multiply(points[index + 2] - points[index + 0], a); // C1
+                yield return points[index + 2] + Vector.Multiply(points[index + 1] - points[index + 3], a); // C2
+                yield return points[index + 2];                                                            // 終点
+            }
         }
     }
 }

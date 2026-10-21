@@ -6,12 +6,11 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 
-namespace WpfCad2Lib.TestApp
+namespace WpfCad2Lib.TestApp;
+
+/// <summary>
+/// App.xaml の相互作用ロジック
+/// </summary>
+public partial class App : Application
 {
-    /// <summary>
-    /// App.xaml の相互作用ロジック
-    /// </summary>
-    public partial class App : Application
-    {
-    }
 }
