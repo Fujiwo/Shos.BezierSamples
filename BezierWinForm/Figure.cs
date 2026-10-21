@@ -58,7 +58,7 @@ public class BezierLine : Figure
     }
 
     /// <summary>
-    /// 通過点をすべて通る曲線を描く。最初と最後の区間は直線、その間はベジエ曲線になる。
+    /// 通過点をすべて通る 3 次スプライン曲線を描く。最初と最後の区間も含め、すべての区間がベジエ曲線になる。
     /// </summary>
     public override void Draw(Graphics graphics)
     {
