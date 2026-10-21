@@ -40,28 +40,31 @@ namespace BezierWin32 {
         }
     };
 
-    // 通過点の列をベジエ曲線に変換して GDI で描く処理をまとめたもの。
+    // 実数の 2 次元ベクトル。3 次スプライン曲線の接線のように、整数の POINT / SIZE では精度が足りない計算に使う。
+    struct Vector2
+    {
+        double x = 0.0;
+        double y = 0.0;
+    };
+
+    // 通過点の列を 3 次スプライン曲線 (3 次ベジエ曲線の列) に変換して GDI で描く処理をまとめたもの。
     // 点列は std::span で受け取るので、vector でも配列でもコピーせずに渡せる。
     class Win32Graphics
     {
     public:
-        // 通過点 points をすべて通る滑らかな線を描く。
-        // 最初の区間 (P0 → P1) と最後の区間 (P(n−2) → P(n−1)) は片側の隣の点が無く、
-        // 曲線の向きが決まらないので直線で描き、その間の区間をベジエ曲線で描く。
+        // 通過点 points をすべて通る、滑らかな 3 次スプライン曲線を描く。
+        // 最初の区間 (P0 → P1) と最後の区間 (P(n−2) → P(n−1)) も含め、n − 1 個の区間すべてをベジエ曲線で描く。
+        // 両端の向きは、自然スプラインの条件 (端点で曲がり具合 = 2 階微分が 0) から決まる。
         static void DrawBezierLine(HDC hdc, span<const POINT> points)
         {
             if (points.size() < 2U)
                 return;
-            // 最初の区間 P0 → P1 を直線で描く。
-            ::Polyline(hdc, points.data(), 2);
-            // 内側の区間 P1 → … → P(n−2) をベジエ曲線で描く。
-            // 通過点が 3 個以下だとベジエにできる区間が無く、変換結果が 4 点未満になるので描かない。
-            const auto bezierPoints = ToBezierPolyline(points);
-            if (bezierPoints.size() >= 4)
-                DrawBeziers(hdc, bezierPoints);
-            // 最後の区間 P(n−2) → P(n−1) を直線で描く (通過点が 2 個なら最初の区間と同じなので描かない)。
-            if (points.size() > 2)
-                ::Polyline(hdc, points.last(2).data(), 2);
+            // 2 点だけなら直線になる (ベジエ曲線にしても直線になるので、そのまま線を引く)。
+            if (points.size() == 2U) {
+                ::Polyline(hdc, points.data(), 2);
+                return;
+            }
+            DrawBeziers(hdc, ToSplineBezier(points));
         }
 
     private:
@@ -78,9 +81,91 @@ namespace BezierWin32 {
                 ::PolyBezierTo(hdc, points.subspan(index, 3).data(), 3);
         }
 
-        // 通過点の列を、ベジエ描画用の点列 [始点, 制御点1, 制御点2, 終点, 制御点1, 制御点2, 終点, …] に変換する。
+        // 通過点の列 P0〜P(n−1) を、すべての点を通る自然 3 次スプライン曲線のベジエ描画用の点列
+        // [P0, 制御点1, 制御点2, P1, 制御点1, 制御点2, P2, …, P(n−1)] (1 + 3(n − 1) 点) に変換する。
+        // 区間 P(i) → P(i+1) の制御点は、各通過点での接線 m (ToSplineTangents) から
+        // 制御点1 = P(i) + m(i) / 3、制御点2 = P(i+1) − m(i+1) / 3 とする (3 次エルミート曲線をベジエで表したもの)。
+        // 接線は実数で求め、制御点を整数座標に丸めるのは最後だけにする。通過点が 2 個未満のときは通過点をそのまま返す。
+        [[nodiscard]] static vector<POINT> ToSplineBezier(span<const POINT> points)
+        {
+            if (points.size() < 2)
+                return vector<POINT>(points.begin(), points.end());
+
+            const auto tangents = ToSplineTangents(points);
+            // 位置 point を、ベクトル tangent の rate 倍だけずらして整数座標に丸める。
+            const auto offset = [](const POINT& point, const Vector2& tangent, double rate) {
+                return POINT{ .x = Win32Geometry::Round(point.x + tangent.x * rate), .y = Win32Geometry::Round(point.y + tangent.y * rate) };
+            };
+
+            vector<POINT> bezierPoints;
+            bezierPoints.reserve(1 + 3 * (points.size() - 1));
+            bezierPoints.push_back(points[0]);
+            for (std::size_t index = 0; index + 1 < points.size(); index++) {
+                bezierPoints.push_back(offset(points[index    ], tangents[index    ],  1.0 / 3.0));
+                bezierPoints.push_back(offset(points[index + 1], tangents[index + 1], -1.0 / 3.0));
+                bezierPoints.push_back(points[index + 1]);
+            }
+            return bezierPoints;
+        }
+
+        // すべての通過点を通る自然 3 次スプライン曲線の、各通過点での接線 (パラメーター t についての微分) を返す。
+        // 各区間をパラメーター t (0〜1、どの区間も同じ幅) の 3 次式とし、つなぎ目で 1 階微分と 2 階微分が一致するという条件から、
+        // 内側の点では m(i−1) + 4·m(i) + m(i+1) = 3·(P(i+1) − P(i−1)) が成り立つ。
+        // 両端には自然スプラインの条件 (端点で 2 階微分が 0) を足す: 2·m0 + m1 = 3·(P1 − P0)、m(n−2) + 2·m(n−1) = 3·(P(n−1) − P(n−2))。
+        // 両隣の接線が自分と同じと仮定すると m(i) = (P(i+1) − P(i−1)) / 2 になり、Catmull-Rom (ToBezierPolyline) の接線に一致する。
+        [[nodiscard]] static vector<Vector2> ToSplineTangents(span<const POINT> points)
+        {
+            const auto count = points.size();
+            vector<double> lower(count), diagonal(count), upper(count), rightX(count), rightY(count);
+            for (std::size_t index = 0; index < count; index++) {
+                // 端では、無い方の隣の点の代わりに自分自身を使うと、右辺が内側の点と同じ式で書ける
+                const auto previous = index == 0         ? index : index - 1;
+                const auto next     = index == count - 1 ? index : index + 1;
+                lower   [index] = index == 0                         ? 0.0 : 1.0;
+                upper   [index] = index == count - 1                 ? 0.0 : 1.0;
+                diagonal[index] = index == 0 || index == count - 1 ? 2.0 : 4.0;
+                rightX  [index] = 3.0 * (static_cast<double>(points[next].x) - points[previous].x);
+                rightY  [index] = 3.0 * (static_cast<double>(points[next].y) - points[previous].y);
+            }
+            // x 座標と y 座標は同じ係数行列なので、右辺だけを替えて 2 回解く
+            const auto x = SolveTridiagonal(lower, diagonal, upper, rightX);
+            const auto y = SolveTridiagonal(lower, diagonal, upper, rightY);
+            vector<Vector2> tangents(count);
+            for (std::size_t index = 0; index < count; index++)
+                tangents[index] = Vector2{ .x = x[index], .y = y[index] };
+            return tangents;
+        }
+
+        // 三重対角の連立方程式 lower[i]·x(i−1) + diagonal[i]·x(i) + upper[i]·x(i+1) = right[i] を、
+        // トーマス法 (前進消去と後退代入) で O(n) で解く。lower[0] と upper[n−1] は使わない。
+        // 対角成分が優位な行列 (|4| > |1| + |1|、|2| > |1|) を前提にしているので、ピボット選択はしない。
+        [[nodiscard]] static vector<double> SolveTridiagonal(span<const double> lower, span<const double> diagonal, span<const double> upper, span<const double> right)
+        {
+            const auto count = diagonal.size();
+            vector<double> x(count);
+            if (count == 0)
+                return x;
+            vector<double> reducedUpper(count);   // 前進消去後の upper (対角を 1 に正規化したもの)
+            vector<double> reducedRight(count);   // 前進消去後の right
+            // 前進消去: 各行から 1 つ上の行の lower 倍を引き、左側の係数を消していく
+            for (std::size_t index = 0; index < count; index++) {
+                const auto previousUpper = index == 0 ? 0.0 : reducedUpper[index - 1];
+                const auto previousRight = index == 0 ? 0.0 : reducedRight[index - 1];
+                const auto denominator   = diagonal[index] - lower[index] * previousUpper;
+                reducedUpper[index] = upper[index] / denominator;
+                reducedRight[index] = (right[index] - lower[index] * previousRight) / denominator;
+            }
+            // 後退代入: 最後の行から順に、1 つ下の行の解を使って求める
+            x[count - 1] = reducedRight[count - 1];
+            for (auto index = count - 1; index-- > 0; )
+                x[index] = reducedRight[index] - reducedUpper[index] * x[index + 1];
+            return x;
+        }
+
+        // 通過点の列を、Catmull-Rom スプラインのベジエ描画用の点列 [始点, 制御点1, 制御点2, 終点, 制御点1, 制御点2, 終点, …] に変換する。
         // 前後に隣の点がそろっている内側の区間 P1 → P2, P2 → P3, …, P(n−3) → P(n−2) (n − 3 区間) だけを変換する。
         // 通過点が 4 個未満のときはベジエにできる区間が無いので、通過点をそのまま返す。
+        // 描画には 3 次スプライン曲線 (ToSplineBezier) を使っていて、この関数は比べるために残している。
         [[nodiscard]] static vector<POINT> ToBezierPolyline(span<const POINT> points)
         {
             if (points.size() < 4)
@@ -94,7 +179,7 @@ namespace BezierWin32 {
             vector<POINT> bezierPoints;
             // 始点 1 個 + 区間ごとに 3 個 (制御点1, 制御点2, 終点)。
             bezierPoints.reserve(1 + 3 * (points.size() - 3));
-            // 最初のベジエ区間の始点は P1 (P0 → P1 は直線で別に描く)。
+            // 最初のベジエ区間の始点は P1 (P0 → P1 は P0 の手前の点が無く、向きが決まらないので含めない)。
             bezierPoints.push_back(points[1]);
             // 区間 P[i+1] → P[i+2] ごとに、制御点 2 個と終点を追加する。
             for (std::size_t index = 0; index < points.size() - 3; index++) {
