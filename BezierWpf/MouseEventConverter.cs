@@ -25,11 +25,14 @@ namespace BezierWpf
         bool         isStarted         = false;
         bool         isDragging        = false;
         Point        startPosition;
+        Point        lastPosition;
         Queue<Point> draggingPositions = new Queue<Point>();
 
         public void OnMouseLeftButtonDown(object sender, MouseEventArgs e)
         {
             OnMouseLeftButtonDown(e.ToPosition(sender));
+            // 要素の外でボタンを離しても MouseLeftButtonUp を受け取れるようにする
+            ((UIElement)sender).CaptureMouse();
         }
 
         public void OnMouseMove(object sender, MouseEventArgs e)
@@ -41,13 +44,20 @@ namespace BezierWpf
         public void OnMouseLeftButtonUp(object sender, MouseEventArgs e)
         {
             OnMouseLeftButtonUp(e.ToPosition(sender));
+            ((UIElement)sender).ReleaseMouseCapture();
+        }
+
+        public void OnLostMouseCapture(object sender, MouseEventArgs e)
+        {
+            OnLostMouseCapture();
         }
 
         public void OnMouseLeftButtonDown(Point position)
         {
             isStarted     = true ;
             isDragging    = false;
-            startPosition = position;
+            startPosition =
+            lastPosition  = position;
         }
 
         bool canDragStart(Point position)
@@ -57,6 +67,7 @@ namespace BezierWpf
 
         public void OnMouseMove(Point position)
         {
+            lastPosition = position;
             if (isDragging) {
                 RaiseDragging(position);
             } else if (isStarted) {
@@ -78,6 +89,15 @@ namespace BezierWpf
                 isStarted = false;
                 draggingPositions.Clear();
             }
+        }
+
+        // ボタンを離す前にキャプチャーを失った (Alt+Tab など) 場合は、最後の位置でドラッグを終える
+        public void OnLostMouseCapture()
+        {
+            if (isDragging)
+                RaiseDragEnd(lastPosition);
+            isDragging = isStarted = false;
+            draggingPositions.Clear();
         }
 
         void RaiseClick(Point position)

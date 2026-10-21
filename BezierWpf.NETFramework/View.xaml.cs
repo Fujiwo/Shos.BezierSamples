@@ -106,6 +106,7 @@ namespace BezierWpf
             canvas.MouseLeftButtonDown += mouseEventConverter.OnMouseLeftButtonDown;
             canvas.MouseMove           += mouseEventConverter.OnMouseMove          ;
             canvas.MouseLeftButtonUp   += mouseEventConverter.OnMouseLeftButtonUp  ;
+            canvas.LostMouseCapture    += mouseEventConverter.OnLostMouseCapture   ;
         }
 
         void InitializeInputEventHandlers()

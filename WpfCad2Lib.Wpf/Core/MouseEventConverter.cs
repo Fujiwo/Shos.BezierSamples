@@ -26,11 +26,14 @@ namespace WpfCad2Lib.Wpf
         bool                  isStarted         = false;
         bool                  isDragging        = false;
         Point                 startPosition;
+        Point                 lastPosition;
         readonly Queue<Point> draggingPositions = new Queue<Point>();
 
         public void OnMouseLeftButtonDown(object sender, MouseEventArgs e)
         {
             OnMouseLeftButtonDown(e.ToPosition(sender));
+            // 要素の外でボタンを離しても MouseLeftButtonUp を受け取れるようにする
+            ((UIElement)sender).CaptureMouse();
         }
 
         public void OnMouseMove(object sender, MouseEventArgs e)
@@ -42,13 +45,20 @@ namespace WpfCad2Lib.Wpf
         public void OnMouseLeftButtonUp(object sender, MouseEventArgs e)
         {
             OnMouseLeftButtonUp(e.ToPosition(sender));
+            ((UIElement)sender).ReleaseMouseCapture();
+        }
+
+        public void OnLostMouseCapture(object sender, MouseEventArgs e)
+        {
+            OnLostMouseCapture();
         }
 
         public void OnMouseLeftButtonDown(Point position)
         {
             isStarted     = true ;
             isDragging    = false;
-            startPosition = position;
+            startPosition =
+            lastPosition  = position;
         }
 
         bool canDragStart(Point position)
@@ -58,6 +68,7 @@ namespace WpfCad2Lib.Wpf
 
         public void OnMouseMove(Point position)
         {
+            lastPosition = position;
             if (isDragging) {
                 RaiseDragging(position);
             } else if (isStarted) {
@@ -79,6 +90,15 @@ namespace WpfCad2Lib.Wpf
                 isStarted = false;
                 draggingPositions.Clear();
             }
+        }
+
+        // ボタンを離す前にキャプチャーを失った (Alt+Tab など) 場合は、最後の位置でドラッグを終える
+        public void OnLostMouseCapture()
+        {
+            if (isDragging)
+                RaiseDragEnd(lastPosition);
+            isDragging = isStarted = false;
+            draggingPositions.Clear();
         }
 
         void RaiseClick(Point position)

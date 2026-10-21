@@ -51,15 +51,12 @@ namespace BezierWpf
                 pathGeometry.Figures.Add(pathFigure);
             }
             else if (points.Count >= 3) {
-                var pathFigure = new PathFigure { StartPoint = points[0], IsClosed = true };
-
+                // ToBezierPolygon() の結果は points[1] から始まり、points[0] → points[1] の区間で閉じる
                 var bezierPoints = points.ToBezierPolygon().ToArray();
-                if (bezierPoints.Length >= 4) {
-                    for (int index = 1; index < bezierPoints.Length; index += 3)
-                        pathFigure.Segments.Add(new BezierSegment(bezierPoints[index], bezierPoints[index + 1], bezierPoints[index + 2], true));
-                }
-                if (points.Count > 2)
-                    pathFigure.Segments.Add(new LineSegment(points[points.Count - 1], true));
+                var pathFigure   = new PathFigure { StartPoint = bezierPoints[0], IsClosed = true };
+
+                for (int index = 1; index + 2 < bezierPoints.Length; index += 3)
+                    pathFigure.Segments.Add(new BezierSegment(bezierPoints[index], bezierPoints[index + 1], bezierPoints[index + 2], true));
 
                 pathGeometry.Figures.Add(pathFigure);
             }

@@ -139,9 +139,11 @@ namespace WpfCad2Lib.Wpf
 
         void InitializeMouseEventHandlers()
         {
+            canvas.MouseLeftButtonDown += delegate { Focus(); };
             canvas.MouseLeftButtonDown += mouseEventConverter.OnMouseLeftButtonDown;
             canvas.MouseMove           += mouseEventConverter.OnMouseMove          ;
             canvas.MouseLeftButtonUp   += mouseEventConverter.OnMouseLeftButtonUp  ;
+            canvas.LostMouseCapture    += mouseEventConverter.OnLostMouseCapture   ;
             canvas.MouseWheel          += OnMouseWheel;
             //MouseDoubleClick           += OnMouseDoubleClick;
         }
@@ -156,14 +158,17 @@ namespace WpfCad2Lib.Wpf
             Zoom(e.ToPosition(sender), 1.0 - e.Delta / 120.0 * Common.MouseWheelZoomRate);
         }
 
-        void OnKeyUp(object sender, KeyEventArgs e)
+        // 子の ScrollViewer やキーボードナビゲーションに矢印キーを奪われないよう、Preview で受けて処理済みにする
+        void OnPreviewKeyDown(object sender, KeyEventArgs e)
         {
             switch (e.Key) {
                 case Key.Left : Pan(Direction.Left ); break;
                 case Key.Right: Pan(Direction.Right); break;
                 case Key.Up   : Pan(Direction.Up   ); break;
                 case Key.Down : Pan(Direction.Down ); break;
+                default       : return;
             }
+            e.Handled = true;
         }
 
         void InitializeInputEventHandlers()

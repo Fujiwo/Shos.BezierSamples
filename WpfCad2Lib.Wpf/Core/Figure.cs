@@ -1,5 +1,6 @@
 ﻿using WpfCad2Lib.Core;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -17,7 +18,15 @@ namespace WpfCad2Lib.Wpf
         public FigureAttribute Attribute
         {
             get { return attribute; }
-            set { attribute = value; }
+            set
+            {
+                if (value == attribute)
+                    return;
+                attribute.PropertyChanged -= OnAttributeChanged;
+                attribute                  = value;
+                attribute.PropertyChanged += OnAttributeChanged;
+                ApplyAttribute();
+            }
         }
 
         public bool IsSelected
@@ -43,12 +52,9 @@ namespace WpfCad2Lib.Wpf
             get { return new Point[] { }; }
         }
 
-        public void AddElements(UIElementCollection elementCollection)
+        protected Figure()
         {
-            SetElements();
-            if (elements is null)
-                return;
-            elements.ForEach(element => elementCollection.Add(element));
+            attribute.PropertyChanged += OnAttributeChanged;
         }
 
         public void AddElements(UIElementCollection elementCollection, Point firstPoint)
@@ -128,32 +134,15 @@ namespace WpfCad2Lib.Wpf
 
         protected abstract IEnumerable<FrameworkElement> GetInitialElements();
 
-        protected virtual IEnumerable<FrameworkElement>? ToElements()
-        {
-            return null;
-        }
-
-        protected virtual IEnumerable<FrameworkElement>? RegetElements()
-        {
-            return null;
-        }
-
         protected abstract void SetFirst(IEnumerable<FrameworkElement> elements, Point point);
 
         protected virtual void SetNext(IEnumerable<FrameworkElement> elements, Point point)
         {}
 
-        void SetElements()
-        {
-            elements = ToElements()?.ToList() ?? new List<FrameworkElement>();
-            attribute.SetAttribute(elements, IsFilled);
-            attribute.PropertyChanged += delegate { OnAttributeChanged(); };
-        }
-
         void InitializeElements()
         {
             elements = GetInitialElements().ToList();
-            attribute.SetAttribute(elements, IsFilled);
+            ApplyAttribute();
         }
         
         IEnumerable<Shape> GetSelectors()
@@ -176,11 +165,14 @@ namespace WpfCad2Lib.Wpf
             return shape;
         }
 
-        void OnAttributeChanged()
+        void OnAttributeChanged(object? sender, PropertyChangedEventArgs e)
         {
-            var newElements = RegetElements();
-            if (newElements is not null)
-                elements = newElements.ToList();
+            ApplyAttribute();
+        }
+
+        // 画面上の要素はそのままに、属性 (色・太さなど) だけを設定し直す
+        void ApplyAttribute()
+        {
             if (elements is not null)
                 attribute.SetAttribute(elements, IsFilled);
         }

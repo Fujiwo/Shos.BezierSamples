@@ -110,7 +110,13 @@ namespace WpfCad2Lib.Wpf
 
         public object Clone()
         {
-            return MemberwiseClone();
+            // MemberwiseClone() では PropertyChanged の購読者まで複製されるため、値だけを写した新しいインスタンスを返す
+            return new FigureAttribute {
+                StrokeColor     = StrokeColor    ,
+                FillColor       = FillColor      ,
+                StrokeThickness = StrokeThickness,
+                FontSize        = FontSize
+            };
         }
     }
 }
