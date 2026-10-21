@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="400" viewBox="0 0 640 400" font-family="'Segoe UI','Yu Gothic UI','Hiragino Sans','Noto Sans JP',sans-serif" role="img" aria-label="通過点の列全体を 3 次スプライン曲線でつなぐ">
+  <title>通過点の列全体を 3 次スプライン曲線でつなぐ</title>
+  <defs>
+    <marker id="arrow-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d1495b"/></marker>
+    <marker id="arrow-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#2a9d55"/></marker>
+  </defs>
+  <rect x="0" y="0" width="640" height="400" rx="12" fill="#ffffff" stroke="#d0d7de"/>
+  <text x="24" y="36" font-size="18" font-weight="700" fill="#24292f">点列全体のつなぎ方 (ToSplineBezier)</text>
+  <polyline points="50,270 150,120 270,230 390,100 500,230 590,130" fill="none" stroke="#8c959f" stroke-width="1.5" stroke-dasharray="2 4"/>
+  <line x1="50" y1="270" x2="81.6" y2="189" stroke="#8c959f" stroke-width="1"/>
+  <line x1="150" y1="120" x2="113.2" y2="108" stroke="#8c959f" stroke-width="1"/>
+  <line x1="150" y1="120" x2="186.8" y2="132" stroke="#8c959f" stroke-width="1"/>
+  <line x1="270" y1="230" x2="228.9" y2="236.9" stroke="#8c959f" stroke-width="1"/>
+  <line x1="270" y1="230" x2="311.1" y2="223.1" stroke="#8c959f" stroke-width="1"/>
+  <line x1="390" y1="100" x2="351.1" y2="104.3" stroke="#8c959f" stroke-width="1"/>
+  <line x1="390" y1="100" x2="428.9" y2="95.7" stroke="#8c959f" stroke-width="1"/>
+  <line x1="500" y1="230" x2="466.8" y2="205.9" stroke="#8c959f" stroke-width="1"/>
+  <line x1="500" y1="230" x2="533.2" y2="254.1" stroke="#8c959f" stroke-width="1"/>
+  <line x1="590" y1="130" x2="561.6" y2="192" stroke="#8c959f" stroke-width="1"/>
+  <path d="M50,270 C81.6,189 113.2,108 150,120 C186.8,132 228.9,236.9 270,230 C311.1,223.1 351.1,104.3 390,100 C428.9,95.7 466.8,205.9 500,230 C533.2,254.1 561.6,192 590,130" fill="none" stroke="#1f6feb" stroke-width="4" stroke-linecap="round"/>
+  <rect x="78.1" y="185.5" width="7" height="7" fill="#ffffff" stroke="#57606a" stroke-width="1.5"/>
+  <rect x="109.7" y="104.5" width="7" height="7" fill="#ffffff" stroke="#57606a" stroke-width="1.5"/>
+  <rect x="183.3" y="128.5" width="7" height="7" fill="#ffffff" stroke="#57606a" stroke-width="1.5"/>
+  <rect x="225.4" y="233.4" width="7" height="7" fill="#ffffff" stroke="#57606a" stroke-width="1.5"/>
+  <rect x="307.6" y="219.6" width="7" height="7" fill="#ffffff" stroke="#57606a" stroke-width="1.5"/>
+  <rect x="347.6" y="100.8" width="7" height="7" fill="#ffffff" stroke="#57606a" stroke-width="1.5"/>
+  <rect x="425.4" y="92.2" width="7" height="7" fill="#ffffff" stroke="#57606a" stroke-width="1.5"/>
+  <rect x="463.3" y="202.4" width="7" height="7" fill="#ffffff" stroke="#57606a" stroke-width="1.5"/>
+  <rect x="529.7" y="250.6" width="7" height="7" fill="#ffffff" stroke="#57606a" stroke-width="1.5"/>
+  <rect x="558.1" y="188.5" width="7" height="7" fill="#ffffff" stroke="#57606a" stroke-width="1.5"/>
+  <circle cx="50" cy="270" r="5" fill="#24292f"/>
+  <text x="50" y="298" font-size="16" font-weight="600" fill="#24292f" text-anchor="middle">P0</text>
+  <circle cx="150" cy="120" r="5" fill="#24292f"/>
+  <text x="150" y="104" font-size="16" font-weight="600" fill="#24292f" text-anchor="middle">P1</text>
+  <circle cx="270" cy="230" r="5" fill="#24292f"/>
+  <text x="270" y="260" font-size="16" font-weight="600" fill="#24292f" text-anchor="middle">P2</text>
+  <circle cx="390" cy="100" r="5" fill="#24292f"/>
+  <text x="390" y="84" font-size="16" font-weight="600" fill="#24292f" text-anchor="middle">P3</text>
+  <circle cx="500" cy="230" r="5" fill="#24292f"/>
+  <text x="500" y="260" font-size="16" font-weight="600" fill="#24292f" text-anchor="middle">P4</text>
+  <circle cx="590" cy="130" r="5" fill="#24292f"/>
+  <text x="590" y="114" font-size="16" font-weight="600" fill="#24292f" text-anchor="middle">P5</text>
+  <rect x="24" y="320" width="592" height="62" rx="8" fill="#f6f8fa" stroke="#d0d7de"/>
+  <line x1="40" y1="342" x2="72" y2="342" stroke="#1f6feb" stroke-width="4" stroke-linecap="round"/>
+  <text x="82" y="347" font-size="14" fill="#24292f">3 次スプライン曲線。最初と最後の区間も含め、n − 1 区間すべてがベジエ曲線</text>
+  <rect x="52" y="360" width="8" height="8" fill="#ffffff" stroke="#57606a" stroke-width="1.5"/>
+  <text x="82" y="370" font-size="14" fill="#24292f">制御点。両端では曲がり具合 (2 階微分) が 0 になるよう決まる</text>
+</svg>

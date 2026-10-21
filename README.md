@@ -1,17 +1,17 @@
 # Shos.BezierSamples
 
-マウスで指定した**通過点を滑らかにつなぐベジエ曲線**を描くサンプル集です。
+マウスで指定した**すべての通過点を滑らかに通る曲線 (3 次スプライン曲線)** を、3 次ベジエ曲線の列として描くサンプル集です。
 同じアルゴリズムを Win32 (C++)・Windows Forms・WPF で書き分けているので、API ごとの違いを見比べられます。
 WPF 版を発展させた簡易 CAD ライブラリ **WpfCad2Lib** も含まれています。
 
-> 教材として、プロジェクトごとに独立して読めるようにしています。そのため、ベジエ変換のコードや .NET / .NET Framework 版の実装は、意図的にプロジェクトごとに重複させています。
+> 教材として、プロジェクトごとに独立して読めるようにしています。そのため、曲線の変換のコードや .NET / .NET Framework 版の実装は、意図的にプロジェクトごとに重複させています。
 
 ## 目次
 
 - [プロジェクト構成](#プロジェクト構成)
 - [動作環境とビルド](#動作環境とビルド)
 - [サンプルの操作方法](#サンプルの操作方法)
-- [通過点からベジエ曲線を作るしくみ](#通過点からベジエ曲線を作るしくみ)
+- [通過点を通る曲線を作るしくみ](#通過点を通る曲線を作るしくみ)
 - [WpfCad2Lib の使い方](#wpfcad2lib-の使い方)
 - [WpfCad2Lib のクラス図](#wpfcad2lib-のクラス図)
 - [既知の制限](#既知の制限)
@@ -21,14 +21,15 @@ WPF 版を発展させた簡易 CAD ライブラリ **WpfCad2Lib** も含まれ�
 
 | プロジェクト | 種類 | ターゲット | 内容 |
 |---|---|---|---|
-| `BezierWin32` | C++ / Win32 | PlatformToolset v145, C++20 | クリックした点を通るベジエ曲線を描く最小のサンプル |
-| `BezierWinForm` | C# / Windows Forms | `net10.0-windows10.0.26100.0` | ドラッグした軌跡をベジエ曲線で描く。Model / View / Controller をデザイナーで配置するコンポーネントとして実装 |
+| `BezierWin32` | C++ / Win32 | PlatformToolset v145, C++20 | クリックした点を通る曲線を描く最小のサンプル |
+| `BezierWinForm` | C# / Windows Forms | `net10.0-windows10.0.26100.0` | ドラッグした軌跡を通る曲線を描く。Model / View / Controller をデザイナーで配置するコンポーネントとして実装 |
 | `BezierWinForm.NETFramework` | C# / Windows Forms | .NET Framework 4.8 | `BezierWinForm` の .NET Framework 版 |
 | `BezierWpf` | C# / WPF | `net10.0-windows10.0.26100.0` | 線分・矩形・曲線をメニューで切り替えて描く、コマンド方式のサンプル |
 | `BezierWpf.NETFramework` | C# / WPF | .NET Framework 4.8 | `BezierWpf` の .NET Framework 版 |
 | `WpfCad2Lib.Core` | C# クラスライブラリ | `net10.0` | UI に依存しない共通部品 (`Subject` など) |
 | `WpfCad2Lib.Wpf` | C# / WPF クラスライブラリ | `net10.0-windows10.0.26100.0` | 簡易 CAD ライブラリ。図形・選択・ズーム / パン・袋文字 |
 | `WpfCad2Lib.TestApp` | C# / WPF アプリ | `net10.0-windows10.0.26100.0` | WpfCad2Lib の動作確認アプリ |
+| `BezierSamples.Tests` | C# / xUnit | `net10.0-windows10.0.26100.0` | 曲線の変換の単体テスト (WpfCad2Lib・BezierWpf・BezierWinForm) |
 
 ```text
 Shos.BezierSamples.sln
@@ -42,9 +43,11 @@ Shos.BezierSamples.sln
 │   ├─ Core/                     … MVC・コマンド・図形の基底・ズーム / パン
 │   ├─ Commands/                 … 作図コマンド
 │   ├─ Figures/                  … 図形
-│   └─ Utility/                  … ベジエ変換・幾何計算・袋文字など
+│   └─ Utility/                  … 曲線の変換・幾何計算・袋文字など
 ├─ WpfCad2Lib.TestApp/           … 動作確認アプリ
+├─ BezierSamples.Tests/          … 単体テスト
 ├─ docs/images/                  … README の図
+├─ Plans/                        … 変更の計画書
 └─ Reviews/                      … リポジトリのレビュー結果
 ```
 
@@ -65,11 +68,14 @@ Visual Studio で `Shos.BezierSamples.sln` を開き、スタートアップ プ
 
 ```powershell
 # ソリューション全体 (C++ と .NET Framework を含む)。Developer PowerShell で実行する
-msbuild Shos.BezierSamples.sln
+msbuild Shos.BezierSamples.sln -restore
 
 # .NET 10 版は、プロジェクトごとに dotnet コマンドでビルド・実行できる
 dotnet run --project BezierWpf/BezierWpf.csproj
 dotnet run --project WpfCad2Lib.TestApp/WpfCad2Lib.TestApp.csproj
+
+# 単体テスト
+dotnet test BezierSamples.Tests/BezierSamples.Tests.csproj
 ```
 
 ## サンプルの操作方法
@@ -77,7 +83,7 @@ dotnet run --project WpfCad2Lib.TestApp/WpfCad2Lib.TestApp.csproj
 | サンプル | 操作 |
 |---|---|
 | `BezierWin32` | 左クリックで通過点を追加します。右クリックで全消去します。 |
-| `BezierWinForm` | 左ボタンでドラッグすると、その軌跡がベジエ曲線になります。 |
+| `BezierWinForm` | 左ボタンでドラッグすると、その軌跡を通る曲線になります。 |
 | `BezierWpf` | 「図形」メニューで線分・矩形・曲線を選んでからドラッグします。 |
 | `WpfCad2Lib.TestApp` | 下の表を参照してください。 |
 
@@ -93,77 +99,159 @@ dotnet run --project WpfCad2Lib.TestApp/WpfCad2Lib.TestApp.csproj
 | マウスホイール | 奥に回すと拡大、手前に回すと縮小します (等倍より小さくはなりません)。 |
 | 矢印キー | 表示をパンします。先に作図領域をクリックしてフォーカスを移してください。 |
 
-## 通過点からベジエ曲線を作るしくみ
+## 通過点を通る曲線を作るしくみ
 
-どのプロジェクトも、**Catmull-Rom スプライン**と同じ考え方で、通過点の列から 3 次ベジエ曲線の制御点を求めています。
+どのプロジェクトも、通過点の列から**自然 3 次スプライン曲線** (すべての点を通り、つなぎ目で曲率まで連続する曲線) を求め、3 次ベジエ曲線の列として描いています。
 
 ### 1 区間の制御点
 
-隣り合う通過点 P1 → P2 の区間を描くとき、その両隣の点 P0 と P3 も使います。
+各通過点 P(i) での曲線の接線 (向きと速さ) を m(i) とします。
+すると、隣り合う通過点の区間 P(i) → P(i+1) は、次の制御点を持つ 3 次ベジエ曲線になります。
 
-![通過点 P0〜P3 から区間 P1→P2 の制御点 C1, C2 を求める図](docs/images/bezier-control-points.svg)
-
-- P1 での曲線の向きは、両隣を結ぶ弦 **P0 → P2** と平行にします。
-- P2 での曲線の向きは、両隣を結ぶ弦 **P1 → P3** と平行にします。
-- 制御点は、それぞれの弦の **1/6** だけ通過点から離れた位置に置きます。
+![通過点での接線 m から、区間 P(i)→P(i+1) の制御点 C1, C2 を求める図](docs/images/spline-control-points.svg)
 
 ```text
-C1 = P1 + (P2 − P0) / 6
-C2 = P2 − (P3 − P1) / 6
+C1 = P(i)   + m(i)   / 3
+C2 = P(i+1) − m(i+1) / 3
 ```
 
-1/6 という値は、次の 2 つを組み合わせたものです。
+3 次ベジエ曲線は、端点での接線が「端点から隣の制御点へのベクトルの 3 倍」になります。
+そのため、通過点から接線の 1/3 だけ離れた位置に制御点を置けば、その通過点で接線 m を持つ曲線になります (3 次エルミート曲線をベジエで表したもの)。
+隣の区間とは同じ接線を共有するので、通過点で向きがそろいます。
 
-- Catmull-Rom スプラインでは、点 P1 での接線を `(P2 − P0) / 2` とします。
-- 3 次ベジエ曲線では、端点から接線の 1/3 だけ離れた位置に制御点を置きます。
+### 接線を求める連立方程式
 
-この 2 つを掛けて `1/2 × 1/3 = 1/6` になります。
-こうすると、隣の区間と通過点で向きがそろうので、つなぎ目が滑らかになります。
+接線 m は、つなぎ目で**曲がり具合 (2 階微分) もそろう**ように決めます。
+各区間をパラメーター t (0〜1、どの区間も同じ幅) の 3 次式とすると、この条件から、内側の通過点ごとに次の式が成り立ちます。
 
-### 点列全体
+```text
+m(i−1) + 4·m(i) + m(i+1) = 3·(P(i+1) − P(i−1))      (i = 1 … n−2)
+```
 
-n 個の通過点 P0〜P(n−1) では、前後に点がそろっている内側の n − 3 区間をベジエ曲線で描きます。
-最初の区間 (P0 → P1) と最後の区間は、片側の点が無くて向きが決まらないので、直線で描きます。
+未知数 m が n 個に対して式が n − 2 個なので、両端に条件を足します。
+**自然スプライン**では、端点で曲がり具合を 0 にします。
 
-![通過点の列全体をベジエ曲線と直線でつなぐ図](docs/images/bezier-polyline.svg)
+```text
+2·m(0)   + m(1)     = 3·(P(1)   − P(0))
+m(n−2)   + 2·m(n−1) = 3·(P(n−1) − P(n−2))
+```
 
-変換処理は、`[始点, 制御点1, 制御点2, 終点, 制御点1, 制御点2, 終点, …]` の形の点列を返します。
-各 API のベジエ描画関数が受け取る形式と同じです。
-WpfCad2Lib の実装 (`GeoExtensions.ToBezierPolyline`) は次のとおりです (コメントは説明のために足したものです)。
+まとめると、係数が対角とその左右だけにある**三重対角**の連立方程式になります。
+
+```text
+| 2 1           |   | m(0)   |   | 3·(P(1) − P(0))     |
+| 1 4 1         |   | m(1)   |   | 3·(P(2) − P(0))     |
+|   1 4 1       | · | m(2)   | = | 3·(P(3) − P(1))     |
+|     …  …  …   |   |  …     |   |  …                  |
+|         1 2   |   | m(n−1) |   | 3·(P(n−1) − P(n−2)) |
+```
+
+- どの行も対角の係数 (4 や 2) が左右の係数の和より大きい (対角優位) ので、**トーマス法** (前進消去と後退代入) で、ピボット選択なしに O(n) で安定して解けます。
+- x 座標と y 座標は同じ係数行列なので、右辺だけを替えて 2 回解きます。
+
+WpfCad2Lib の実装 (`GeoExtensions` の `SolveTridiagonal`) は次のとおりです。
 
 ```csharp
-// C# 14 の拡張メンバー。points.ToBezierPolyline() の形で呼べる
-extension(IList<Point> points)
+// 三重対角の連立方程式 lower[i]·x(i−1) + diagonal[i]·x(i) + upper[i]·x(i+1) = right[i] を、
+// トーマス法 (前進消去と後退代入) で解く。lower[0] と upper[n−1] は使わない
+static double[] SolveTridiagonal(double[] lower, double[] diagonal, double[] upper, double[] right)
 {
-    public IEnumerable<Point> ToBezierPolyline()
-    {
-        if (points.Count < 4) {
-            foreach (var point in points)
-                yield return point;
-        } else {
-            const double a = 1.0 / 6.0;
-            yield return points[1];
-            for (var index = 0; index < points.Count - 3; index++) {
-                yield return points[index + 1] + Vector.Multiply(points[index + 2] - points[index + 0], a); // C1
-                yield return points[index + 2] + Vector.Multiply(points[index + 1] - points[index + 3], a); // C2
-                yield return points[index + 2];                                                            // 終点
-            }
-        }
+    var count        = diagonal.Length;
+    var reducedUpper = new double[count];   // 前進消去後の upper (対角を 1 に正規化したもの)
+    var reducedRight = new double[count];   // 前進消去後の right
+    // 前進消去: 各行から 1 つ上の行の lower 倍を引き、左側の係数を消していく
+    for (var index = 0; index < count; index++) {
+        var previousUpper = index == 0 ? 0.0 : reducedUpper[index - 1];
+        var previousRight = index == 0 ? 0.0 : reducedRight[index - 1];
+        var denominator   = diagonal[index] - lower[index] * previousUpper;
+        reducedUpper[index] = upper[index] / denominator;
+        reducedRight[index] = (right[index] - lower[index] * previousRight) / denominator;
     }
+    // 後退代入: 最後の行から順に、1 つ下の行の解を使って求める
+    var x = new double[count];
+    x[count - 1] = reducedRight[count - 1];
+    for (var index = count - 2; index >= 0; index--)
+        x[index] = reducedRight[index] - reducedUpper[index] * x[index + 1];
+    return x;
 }
 ```
 
-- **閉じた曲線:** `ToBezierPolygon` は、点列の末尾に先頭の 3 点を付け足してから同じ変換をします。こうすると、すべての区間がベジエ曲線になって 1 周つながります。
+### 点列全体
+
+n 個の通過点 P0〜P(n−1) から、最初と最後の区間も含めて n − 1 個のベジエ区間ができます。
+変換処理 (`ToSplineBezier`) は、`[P0, C1, C2, P1, C1, C2, P2, …, P(n−1)]` の 1 + 3(n − 1) 点を返します。
+これは、各 API のベジエ描画関数が受け取る形式そのものです。
+
+![通過点の列全体を 3 次スプライン曲線でつなぐ図](docs/images/spline-polyline.svg)
+
+| 通過点の数 | 描かれるもの |
+|---|---|
+| 0〜1 | 何も描かない |
+| 2 | 直線 (m(0) = m(1) = P(1) − P(0) になり、ベジエ曲線も直線になる) |
+| 3 以上 | n − 1 区間の曲線 |
+
+### 閉じた曲線
+
+`ToClosedSplineBezier` (WinForms の `DrawBezierPolygon`、WPF の `BezierPolygonPathGeometry`) は、最後の点から最初の点へ戻って 1 周する曲線を作ります。
+
+- 最後の点の次を最初の点とみなし、**すべての**通過点で `m(i−1) + 4·m(i) + m(i+1) = 3·(P(i+1) − P(i−1))` (添字は n を法とする) を解きます。
+- 両端の条件は要りませんが、係数行列の左下と右上の角にも 1 が入ります (巡回三重対角)。
+- これを **Sherman-Morrison の公式**で、角を除いた三重対角の連立方程式 2 つに分けて、トーマス法で解きます。
+- 最初の点でも曲率まで連続した、継ぎ目の無い曲線になります。
+
+### 点の間引きとドラッグ中の描画
+
 - **点の間引き:** ドラッグで点を集めるサンプルでは、マウスの細かい揺れで曲線が波打たないよう、直前の点から一定距離以上動いたときだけ点を追加します。距離は `BezierWinForm` が 10、`BezierWpf` が 16、WpfCad2Lib の `CurveFigure` が 8 です。ドラッグを終えた位置は、距離にかかわらず必ず曲線の終点になります。
+- **ドラッグ中の描画 (`CurveFigure`):**
+  - 3 次スプラインでは、点を 1 つ足すと全区間の接線が少しずつ変わります。ドラッグ中に毎回全体を作り直すと、長い曲線では全体で O(n²) の計算になります。
+  - ただし、1 点の変化の影響は 1 区間離れるごとに約 0.27 倍 (2 − √3) に減ります。
+  - そこでドラッグ中は、末尾の 6 区間の接線だけを解き直して差し替え、それより前の接線は固定します (影響は 0.27⁶ ≈ 0.04%)。
+  - ドラッグを終えたときに、全体を正確に作り直します。
+  - ほかのサンプルは点が少ないか、描くたびに全体を計算しても十分に速いので、毎回全体を作り直しています。
 
-プロジェクトごとの描画 API は次のとおりです。
+### 以前の曲線 (Catmull-Rom スプライン) との比較
 
-| プロジェクト | 変換 | 描画 |
+このリポジトリは以前、**Catmull-Rom スプライン**で曲線を描いていました。
+比べられるよう、その変換関数 (`ToBezierPolyline` / `ToBezierPolygon` など) を各プロジェクトに残しています。
+
+違うのは**接線 m の求め方だけ**です。Catmull-Rom は、両隣の点だけで `m(i) = (P(i+1) − P(i−1)) / 2` と決めます。
+制御点は `P(i+1) ± (P(i+2) − P(i)) / 6` になります (1/6 = 接線の 1/2 × 制御点の位置 1/3)。
+
+![Catmull-Rom スプラインで区間 P1→P2 の制御点を求める図](docs/images/bezier-control-points.svg)
+
+3 次スプラインの連立方程式で、両隣の接線が自分と同じ (m(i−1) = m(i+1) = m(i)) と仮定すると、`6·m(i) = 3·(P(i+1) − P(i−1))` となります。
+これは Catmull-Rom の接線そのものです。つまり Catmull-Rom は、3 次スプラインの連立方程式を、その場の情報だけで近似したものといえます。
+
+![同じ通過点での 3 次スプライン曲線と Catmull-Rom スプラインの比較](docs/images/spline-vs-catmull-rom.svg)
+
+| | 3 次スプライン (いまの描画) | Catmull-Rom (以前の描画) |
 |---|---|---|
-| `BezierWin32` | `Win32Graphics::ToBezierPolyline` | `::Polyline` + `::PolyBezierTo` |
-| `BezierWinForm` | `GeometryExtensions.ToBezierPolyline` | `Graphics.DrawLine` + `Graphics.DrawBeziers` |
-| `BezierWpf` | `GeometryExtensions.ToBezierPolyline` | `PathGeometry` + `LineSegment` / `BezierSegment` |
-| `WpfCad2Lib.Wpf` | `GeoExtensions.ToBezierPolyline` | `GeoHelper.BezierPathGeometry` (`PathGeometry`) |
+| 点を通るか | 通る | 通る |
+| 連続性 | C² (曲率まで) | C¹ (向きまで) |
+| 最初と最後の区間 | 曲線 (自然スプラインの条件) | 直線 (片側の点が無く向きが決まらない) |
+| 1 点を動かしたときの影響 | 全区間 (1 区間ごとに約 0.27 倍に減る) | 近くの 4 区間だけ |
+| 計算 | 三重対角の連立方程式 (O(n)) | 区間ごとに個別に計算 |
+| 最適性 | 曲がりの総量 ∫‖C″‖² が最小 | 特に無い |
+
+Catmull-Rom では、最初の区間 (P0 → P1) と最後の区間は直線になっていました。
+
+![Catmull-Rom スプラインで通過点の列全体をベジエ曲線と直線でつなぐ図](docs/images/bezier-polyline.svg)
+
+### プロジェクトごとの関数
+
+| プロジェクト | 接線・変換 | 描画 |
+|---|---|---|
+| `BezierWin32` | `Win32Graphics::ToSplineTangents` / `ToSplineBezier` | `::MoveToEx` + `::PolyBezierTo` (2 点のときは `::Polyline`) |
+| `BezierWinForm` | `GeometryExtensions.ToSplineTangents` / `ToSplineBezier` / `ToClosedSplineBezier` | `Graphics.DrawBeziers` (2 点のときは `Graphics.DrawLine`) |
+| `BezierWpf` | `GeometryExtensions.ToSplineTangents` / `ToSplineBezier` / `ToClosedSplineBezier` | `PathGeometry` + `BezierSegment` |
+| `WpfCad2Lib.Wpf` | `GeoExtensions.ToSplineTangents` / `ToSplineBezier` / `ToClosedSplineBezier` | `GeoHelper.BezierPathGeometry` (`PathGeometry`)、`CurveFigure` (差分更新) |
+
+- **座標の型:** Win32 版は整数の `POINT` なので、接線は実数のベクトル (`Vector2`) で求め、制御点を最後に整数へ丸めます。WinForms 版は `float` の `PointF` なので、連立方程式の途中の計算を `double` で行います。
+- **単体テスト:** `BezierSamples.Tests` は、.NET 10 版の 3 つの実装 (WpfCad2Lib・BezierWpf・BezierWinForm) について次の点を確かめています。
+  - すべての点を通ること
+  - つなぎ目で 1 階微分と 2 階微分が一致すること
+  - 両端で 2 階微分が 0 になること
+  - 実装どうしで同じ制御点になること
 
 ## WpfCad2Lib の使い方
 
@@ -458,6 +546,10 @@ classDiagram
         +IsValidForBezier(this Point point, IList~Point~ points, double MinimumDistance)$ bool
         +ToBezierPolyline(this IList~Point~ points)$ IEnumerable~Point~
         +ToBezierPolygon(this IList~Point~ points)$ IEnumerable~Point~
+        +ToSplineTangents(this IList~Point~ points)$ Vector[]
+        +ToSplineBezier(this IList~Point~ points)$ IEnumerable~Point~
+        +ToClosedSplineTangents(this IList~Point~ points)$ Vector[]
+        +ToClosedSplineBezier(this IList~Point~ points)$ IEnumerable~Point~
     }
     class GeoHelper {
         <<static>>
@@ -486,7 +578,7 @@ classDiagram
         Up
         Down
     }
-    GeoHelper ..> GeoExtensions : ToBezierPolyline / ToBezierPolygon
+    GeoHelper ..> GeoExtensions : ToSplineBezier / ToClosedSplineBezier
     GeoExtensions ..> Geo
 ```
 
@@ -553,7 +645,6 @@ classDiagram
 
 - **Undo / Redo:** `CadData` に実装はありますが、UI にはつないでいません。つなぐには、操作ごとに `StartCommand()` を呼ぶことと、画面上の要素 (`UIElementCollection`) を同期することが必要です。
 - **スクロールバー:** WpfCad2Lib の `View` は `RenderTransform` で拡大するため、拡大しても `ScrollViewer` のスクロールバーは動きません。表示の移動はパンで行います。
-- **両端の区間:** 曲線の最初と最後の区間は直線になります。理由は [点列全体](#点列全体) を参照してください。
 
 ほかの指摘事項と対応状況は、[Reviews/2026-10-21-repository-review.md](Reviews/2026-10-21-repository-review.md) にまとめています。
 
