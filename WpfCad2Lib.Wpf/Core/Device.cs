@@ -80,8 +80,10 @@ namespace WpfCad2Lib.Wpf
 
         public void Home()
         {
-            Offset = new Vector();
-            Rate   = 1.0;
+            // Pan() / Zoom() は行列を直接平行移動するため、offset と rate が初期値のままでも行列は作り直す
+            offset = new Vector();
+            rate   = 1.0;
+            SetModelToViewMatrix();
         }
 
         public void Zoom(Point zoomCenterModelPoint, double rate)
