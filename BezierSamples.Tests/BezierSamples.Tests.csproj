@@ -17,6 +17,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\WpfCad2Lib.Wpf\WpfCad2Lib.Wpf.csproj" />
+    <ProjectReference Include="..\BezierWpf\BezierWpf.csproj" />
   </ItemGroup>
 
 </Project>
