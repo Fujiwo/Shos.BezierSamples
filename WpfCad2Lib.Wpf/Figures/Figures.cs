@@ -163,17 +163,23 @@ public class EllipseFigure : RectFigure
 }
 
 /// <summary>
-/// 自由曲線の図形。ドラッグの軌跡を通過点として記録し、それらを滑らかにつなぐベジエ曲線を描く。
+/// 自由曲線の図形。ドラッグの軌跡を通過点として記録し、すべての通過点を通る 3 次スプライン曲線 (3 次ベジエ曲線の列) を描く。
 /// </summary>
 public class CurveFigure : Figure
 {
     // 直前の通過点からこの距離より離れたときだけ、新しい通過点として記録する。
     // マウスの細かい揺れまで拾うと、通過点が密集して曲線がガタつき、点数も無駄に増えるため
     const double sensitivity = 8.0;
+    // ドラッグ中に解き直す、末尾の区間の数 (AppendSegment)。
+    // これより前の接線は固定するが、その影響は 0.27⁶ ≈ 0.04% 程度なので、見た目は変わらない
+    const int partialRebuildSegmentCount = 6;
     // 記録した通過点の列
-    readonly List<Point> position = [];
-    // 表示中の PathGeometry の中身。差分更新 (AppendSegment) のために保持する。まだ作っていないときは null
-    PathFigure?          pathFigure;
+    readonly List<Point>  position = [];
+    // 各通過点での 3 次スプライン曲線の接線。position と同じ数だけ持つ (ジオメトリを作るまでは空)
+    readonly List<Vector> tangents = [];
+    // 表示中の PathGeometry の中身。区間 P(j) → P(j+1) が Segments[j] にあたる。
+    // 差分更新 (AppendSegment) のために保持する。まだ作っていないときは null
+    PathFigure?           pathFigure;
 
     /// <summary>
     /// 通過点の外接矩形。
@@ -248,39 +254,55 @@ public class CurveFigure : Figure
         Rebuild((Path)elements.First());
     }
 
-    // 点を 1 つ足すと、末尾の直線が曲線になり、その先に新しい直線が付く。
-    // 毎回全体を作り直すと点数 n に対して O(n²) になるため、末尾だけを差し替える
+    // 点を 1 つ足したときに、表示を差分更新する。
+    // 3 次スプライン曲線では、点を 1 つ足すと全区間の接線が少しずつ変わるので、正確には全体を作り直す必要がある。
+    // しかしドラッグ中に毎回全体を作り直すと、点数 n に対して全体で O(n²) になる。
+    // 1 点の変化の影響は 1 区間離れるごとに約 0.27 倍に減るので、ドラッグ中は末尾の partialRebuildSegmentCount 区間だけを
+    // 解き直して差し替え、それより前の接線は固定する。ドラッグを終えたとき (SetLast) に、全体を正確に作り直す
     void AppendSegment(Path element)
     {
-        // まだジオメトリが無い、または点が 3 個以下 (ベジエ区間が無い) なら、全体を作る方が簡単
-        if (pathFigure is null || position.Count <= 3) {
+        var count = position.Count;
+        // まだジオメトリが無い、または点が少なくて末尾だけ解き直しても全体と変わらないなら、全体を作り直す
+        if (pathFigure is null || count <= partialRebuildSegmentCount + 1) {
             Rebuild(element);
             return;
         }
-        // 新しい点を Pn とすると、これまで直線だった最後の区間 P(n−2) → P(n−1) は、先の点 Pn ができたので
-        // 制御点 C2 が決まり、ベジエ曲線にできる。それより前の区間の制御点は前後 4 点だけで決まるので変わらない。
-        // そこで [直線 P(n−2) → P(n−1)] を [ベジエ P(n−2) → P(n−1)] + [直線 P(n−1) → Pn] に置き換える
-        var count        = position.Count;
-        var bezierPoints = Geo.ToBezier(position[count - 4], position[count - 3], position[count - 2], position[count - 1]).ToArray();
-        pathFigure.Segments.RemoveAt(pathFigure.Segments.Count - 1);
-        // bezierPoints[0] (区間の始点) は直前のセグメントの終点なので使わない
-        pathFigure.Segments.Add(new BezierSegment(bezierPoints[1], bezierPoints[2], bezierPoints[3], true));
-        pathFigure.Segments.Add(new LineSegment(position[count - 1], true));
+        // 接線を前回の値に固定する通過点。ここから末尾までの接線だけを解き直す
+        var start           = count - 1 - partialRebuildSegmentCount;
+        var partialTangents = position.ToSplineTangents(start, tangents[start]);
+        tangents.RemoveRange(start, tangents.Count - start);
+        tangents.AddRange(partialTangents);
+        // P(start + 1) から先の接線が変わったので、区間 P(start) → P(start + 1) から末尾までを作り直す。
+        // 新しい点 P(count − 1) への区間もここで足される
+        while (pathFigure.Segments.Count > start)
+            pathFigure.Segments.RemoveAt(pathFigure.Segments.Count - 1);
+        for (var index = start; index < count - 1; index++)
+            pathFigure.Segments.Add(ToBezierSegment(index));
     }
 
-    // 通過点の列から PathGeometry 全体を作り直す。
-    // SetLast では最後の点を置き換えることがあり、そうすると最後のベジエ区間の制御点も変わるので、こちらを使う
+    // 通過点の列から、接線と PathGeometry 全体を正確に作り直す。
+    // SetLast では最後の点を置き換えることがあり、ドラッグ中の近似 (AppendSegment) も解消したいので、こちらを使う
     void Rebuild(Path element)
     {
+        tangents.Clear();
         if (position.Count <= 2) {
             pathFigure = null;
             return;
         }
-        var pathGeometry = GeoHelper.BezierPathGeometry(position);
-        // BezierPathGeometry は点が 2 個以上なら PathFigure を 1 つだけ持つ。以後の差分更新はこの PathFigure に対して行う
-        pathFigure       = pathGeometry.Figures[0];
-        element.Data     = pathGeometry;
+        tangents.AddRange(position.ToSplineTangents());
+        pathFigure = new PathFigure { StartPoint = position[0], IsClosed = false };
+        for (var index = 0; index < position.Count - 1; index++)
+            pathFigure.Segments.Add(ToBezierSegment(index));
+        var pathGeometry = new PathGeometry();
+        pathGeometry.Figures.Add(pathFigure);
+        // 以後の差分更新は、この pathFigure の Segments を直接書き換える (表示にもそのまま反映される)
+        element.Data = pathGeometry;
     }
+
+    // 区間 P(index) → P(index + 1) の 3 次ベジエ曲線を、両端の接線から作る。
+    // 制御点は C1 = P(index) + m(index) / 3、C2 = P(index + 1) − m(index + 1) / 3 (GeoExtensions.ToSplineBezier と同じ)
+    BezierSegment ToBezierSegment(int index)
+        => new(position[index] + tangents[index] / 3.0, position[index + 1] - tangents[index + 1] / 3.0, position[index + 1], true);
 }
 
 /// <summary>

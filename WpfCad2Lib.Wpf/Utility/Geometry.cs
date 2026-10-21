@@ -33,41 +33,29 @@ public static class GeoHelper
         => new Path { Stroke = new SolidColorBrush(color), StrokeThickness = strokeThickness, Data = BezierPolygonPathGeometry(points) };
 
     /// <summary>
-    /// 通過点の列を、開いた曲線の <see cref="PathGeometry"/> にする。
-    /// 内側の区間は 3 次ベジエ曲線、最初と最後の区間は直線になる。
-    /// 点が 2 個未満のときは空のジオメトリを返す。
+    /// 通過点の列を、すべての点を通る開いた 3 次スプライン曲線の <see cref="PathGeometry"/> にする。
+    /// 全区間 (n − 1 個) が 3 次ベジエ曲線になる。点が 2 個のときは線分、2 個未満のときは空のジオメトリを返す。
     /// </summary>
+    /// <remarks>曲線の求め方は <see cref="GeoExtensions.ToSplineBezier"/> を参照。</remarks>
     public static PathGeometry BezierPathGeometry(IList<Point> points)
     {
         var pathGeometry = new PathGeometry();
 
         if (points.Count >= 2) {
-            // 最初の区間 P0 → P1 は、P0 の手前の点が無いので P0 での向きが決まらない。そのため直線で描く
-            var pathFigure = new PathFigure { StartPoint = points[0], IsClosed = false };
-            pathFigure.Segments.Add(new LineSegment(points[1], true));
-
-            // ToBezierPolyline() は [P1, C1, C2, 終点, C1, C2, 終点, …] を返す (点が 4 個以上の場合)。
-            // 先頭の P1 は直前の LineSegment の終点として描き済みなので、index = 1 から 3 個ずつ BezierSegment にする
-            var bezierPoints = points.ToBezierPolyline().ToArray();
-            if (bezierPoints.Length >= 4) {
-                for (int index = 1; index < bezierPoints.Length; index += 3)
-                    pathFigure.Segments.Add(new BezierSegment(bezierPoints[index], bezierPoints[index + 1], bezierPoints[index + 2], true));
-            }
-            // 最後の区間も、終点の先の点が無いので直線で描く。
-            // 点が 3 個のときはベジエ区間が無く、P0 → P1 → P2 の折れ線になる
-            if (points.Count > 2)
-                pathFigure.Segments.Add(new LineSegment(points[points.Count - 1], true));
-
-            pathGeometry.Figures.Add(pathFigure);
+            // ToSplineBezier() は [P0, C1, C2, P1, C1, C2, P2, …] を返す。
+            // 先頭の P0 を PathFigure の始点にし、index = 1 から 3 個ずつ BezierSegment にする
+            var bezierPoints = points.ToSplineBezier().ToArray();
+            pathGeometry.Figures.Add(ToPathFigure(bezierPoints, isClosed: false));
         }
         return pathGeometry;
     }
 
     /// <summary>
-    /// 通過点の列を、閉じた曲線の <see cref="PathGeometry"/> にする。
-    /// 点の列を環状につなぐので、すべての区間 (最後の点 → 最初の点を含む) がベジエ曲線になる。
+    /// 通過点の列を、すべての点を通り、最後の点から最初の点へ戻って閉じる 3 次スプライン曲線の <see cref="PathGeometry"/> にする。
+    /// 全区間 (最後の点 → 最初の点を含む n 個) が 3 次ベジエ曲線になる。
     /// 点が 2 個のときは線分、2 個未満のときは空のジオメトリを返す。
     /// </summary>
+    /// <remarks>曲線の求め方は <see cref="GeoExtensions.ToClosedSplineBezier"/> を参照。</remarks>
     public static PathGeometry BezierPolygonPathGeometry(IList<Point> points)
     {
         var pathGeometry = new PathGeometry();
@@ -79,16 +67,21 @@ public static class GeoHelper
             pathGeometry.Figures.Add(pathFigure);
         }
         else if (points.Count >= 3) {
-            // ToBezierPolygon() の結果は points[1] から始まり、points[0] → points[1] の区間で閉じる
-            var bezierPoints = points.ToBezierPolygon().ToArray();
-            var pathFigure   = new PathFigure { StartPoint = bezierPoints[0], IsClosed = true };
-
-            for (int index = 1; index + 2 < bezierPoints.Length; index += 3)
-                pathFigure.Segments.Add(new BezierSegment(bezierPoints[index], bezierPoints[index + 1], bezierPoints[index + 2], true));
-
-            pathGeometry.Figures.Add(pathFigure);
+            // ToClosedSplineBezier() は [P0, C1, C2, P1, …, C1, C2, P0] を返し、最後の区間で P0 に戻る
+            var bezierPoints = points.ToClosedSplineBezier().ToArray();
+            pathGeometry.Figures.Add(ToPathFigure(bezierPoints, isClosed: true));
         }
         return pathGeometry;
+    }
+
+    // [始点, C1, C2, 終点, C1, C2, 終点, …] の点列を、つながった BezierSegment の PathFigure にする。
+    // 各区間の始点は直前の区間の終点 (最初の区間は StartPoint) なので、index = 1 から 3 個ずつ使う
+    static PathFigure ToPathFigure(Point[] bezierPoints, bool isClosed)
+    {
+        var pathFigure = new PathFigure { StartPoint = bezierPoints[0], IsClosed = isClosed };
+        for (var index = 1; index + 2 < bezierPoints.Length; index += 3)
+            pathFigure.Segments.Add(new BezierSegment(bezierPoints[index], bezierPoints[index + 1], bezierPoints[index + 2], true));
+        return pathFigure;
     }
 }
 
@@ -301,6 +294,11 @@ public static class Geo
 /// <summary>
 /// <see cref="Point"/> / <see cref="Rect"/> / <see cref="Matrix"/> の拡張メソッドと、通過点の列をベジエ曲線の点列に変換する拡張メソッド。
 /// </summary>
+/// <remarks>
+/// 通過点の列の変換には、すべての点を通る 3 次スプライン曲線 (<c>ToSplineBezier</c> / <c>ToClosedSplineBezier</c>、描画に使う) と、
+/// 比較用に残している Catmull-Rom 版 (<c>ToBezierPolyline</c> / <c>ToBezierPolygon</c>) がある。
+/// どちらも、各通過点での接線 m から 3 次ベジエの制御点を P ± m / 3 として求める点は同じで、違うのは接線の求め方だけである。
+/// </remarks>
 public static class GeoExtensions
 {
     extension(Point point1)
@@ -375,9 +373,13 @@ public static class GeoExtensions
         /// </para>
         /// <para>
         /// 前後に点がそろっている内側の n − 3 区間だけを返す。最初の区間 P0 → P1 と最後の区間 P(n−2) → P(n−1) は、
-        /// 片側の点が無くて端点での向きが決まらないので含めない。呼び出し側で直線として描く (<see cref="GeoHelper.BezierPathGeometry"/>)。
+        /// 片側の点が無くて端点での向きが決まらないので含めない (描くなら呼び出し側で直線にする)。
         /// </para>
         /// <para>点が 4 個未満のときはベジエ区間が作れないので、入力の点をそのまま返す。</para>
+        /// <para>
+        /// 描画には 3 次スプライン曲線 (<see cref="ToSplineBezier"/>) を使っている。
+        /// この Catmull-Rom 版は、3 次スプラインと比べるために残している。
+        /// </para>
         /// </remarks>
         public IEnumerable<Point> ToBezierPolyline()
         {
@@ -419,6 +421,209 @@ public static class GeoExtensions
             for (var index = 0; index < 3; index++)
                 polygonPoints.Add(points[index]);
             return polygonPoints.ToBezierPolyline();
+        }
+
+        /// <summary>
+        /// すべての通過点を通る自然 3 次スプライン曲線の、各通過点での接線 (パラメーター t についての微分) を返す。
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// 各区間をパラメーター t (0〜1、どの区間も同じ幅の一様パラメーター) の 3 次式とし、
+        /// つなぎ目で 1 階微分と 2 階微分が一致するという条件から、内側の点 (i = 1 … n − 2) について
+        /// m(i−1) + 4·m(i) + m(i+1) = 3·(P(i+1) − P(i−1)) が成り立つ。
+        /// 未知数 n 個に対して式が n − 2 個なので、両端には自然スプラインの条件 (端点で 2 階微分が 0) を足す:
+        /// 2·m0 + m1 = 3·(P1 − P0)、m(n−2) + 2·m(n−1) = 3·(P(n−1) − P(n−2))。
+        /// </para>
+        /// <para>
+        /// 係数行列は三重対角で、対角成分が優位なので、トーマス法でピボット選択なしに O(n) で安定して解ける。
+        /// </para>
+        /// <para>
+        /// 両隣の接線が自分と同じ (m(i−1) = m(i+1) = m(i)) と仮定すると m(i) = (P(i+1) − P(i−1)) / 2 になり、
+        /// これは <see cref="ToBezierPolyline"/> (Catmull-Rom) の接線に一致する。
+        /// Catmull-Rom は、この連立方程式を両隣の点だけで近似したものといえる。
+        /// </para>
+        /// <para>点が 1 個のときは 0 の接線を 1 つ、点が無いときは空の配列を返す。</para>
+        /// </remarks>
+        public Vector[] ToSplineTangents()
+            => SolveSplineTangents(points, 0, null);
+
+        /// <summary>
+        /// 通過点 points[<paramref name="start"/>] での接線を <paramref name="startTangent"/> に固定して、
+        /// それ以降 (points[<paramref name="start"/>] 〜 末尾) の接線だけを自然 3 次スプラインの条件で解き直す。終点側は自然スプラインの条件になる。
+        /// </summary>
+        /// <param name="start">解き直す範囲の先頭の通過点の位置。</param>
+        /// <param name="startTangent">先頭の通過点での接線 (前回求めた値)。</param>
+        /// <returns>points[<paramref name="start"/>] 以降の各通過点での接線。</returns>
+        /// <remarks>
+        /// 通過点を末尾に足しながら描くとき (<see cref="CurveFigure"/>)、末尾の数区間だけを作り直すために使う。
+        /// 3 次スプラインでは 1 点の変化の影響が 1 区間ごとに約 0.27 倍 (2 − √3) に減るので、
+        /// 十分離れた点の接線を固定しても、形はほとんど変わらない。
+        /// </remarks>
+        internal Vector[] ToSplineTangents(int start, Vector startTangent)
+            => SolveSplineTangents(points, start, startTangent);
+
+        /// <summary>
+        /// 通過点の列 P0〜P(n−1) を、すべての点を通る自然 3 次スプライン曲線のベジエ点列
+        /// [始点 P0, C1, C2, 終点 P1, C1, C2, 終点 P2, …, C1, C2, 終点 P(n−1)] (1 + 3(n − 1) 点) に変換する。
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// 区間 P(i) → P(i+1) は、各通過点での接線 m(i), m(i+1) (<c>ToSplineTangents()</c>) を使って
+        /// C1 = P(i) + m(i) / 3、C2 = P(i+1) − m(i+1) / 3 とする (3 次エルミート曲線を 3 次ベジエ曲線で表したもの)。
+        /// 最初と最後の区間も含め、n − 1 区間すべてがベジエ曲線になる。
+        /// </para>
+        /// <para>点が 2 個未満のときは入力の点をそのまま返す。</para>
+        /// </remarks>
+        public IEnumerable<Point> ToSplineBezier()
+            => points.Count < 2 ? points : ToHermiteBezier(points, points.ToSplineTangents(), isClosed: false);
+
+        /// <summary>
+        /// 通過点の列を環状とみなした、閉じた (周期) 3 次スプライン曲線の、各通過点での接線を返す。
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// 最後の点の次を最初の点とみなし、すべての i について m(i−1) + 4·m(i) + m(i+1) = 3·(P(i+1) − P(i−1)) (添字は n を法とする) を解く。
+        /// 両端の条件は要らないが、係数行列は左下と右上の角にも 1 が入る巡回三重対角になる。
+        /// これを Sherman-Morrison の公式で、角を除いた三重対角の連立方程式 (トーマス法) に分けて解く。
+        /// </para>
+        /// <para>点が 3 個未満のときは、開いた曲線の接線 (<c>ToSplineTangents()</c>) を返す。</para>
+        /// </remarks>
+        public Vector[] ToClosedSplineTangents()
+            => points.Count < 3 ? points.ToSplineTangents() : SolveClosedSplineTangents(points);
+
+        /// <summary>
+        /// 通過点の列 P0〜P(n−1) を、すべての点を通り最後の点から最初の点へ戻って閉じる 3 次スプライン曲線のベジエ点列
+        /// [始点 P0, C1, C2, 終点 P1, …, C1, C2, 終点 P(n−1), C1, C2, 終点 P0] (1 + 3n 点) に変換する。
+        /// </summary>
+        /// <remarks>
+        /// 制御点の求め方は <see cref="ToSplineBezier"/> と同じで、接線に <see cref="ToClosedSplineTangents"/> を使う。
+        /// 一周つながり、P0 でも 2 階微分まで連続する。点が 3 個未満のときは入力の点をそのまま返す。
+        /// </remarks>
+        public IEnumerable<Point> ToClosedSplineBezier()
+            => points.Count < 3 ? points : ToHermiteBezier(points, points.ToClosedSplineTangents(), isClosed: true);
+    }
+
+    // points[start] 〜 末尾の各通過点での接線を、自然 3 次スプラインの連立方程式を解いて求める。
+    // startTangent が null なら始点側も自然スプラインの条件にし、null でなければ始点の接線をその値に固定する
+    static Vector[] SolveSplineTangents(IList<Point> points, int start, Vector? startTangent)
+    {
+        var count = points.Count - start;
+        if (count <= 1)
+            return count == 1 ? [startTangent ?? new Vector()] : [];
+
+        // 三重対角の係数 (lower: 対角の左、diagonal: 対角、upper: 対角の右) と右辺を、1 行 (1 通過点) ずつ作る
+        var lower    = new double[count];
+        var diagonal = new double[count];
+        var upper    = new double[count];
+        var rightX   = new double[count];
+        var rightY   = new double[count];
+        for (var row = 0; row < count; row++) {
+            var    index = start + row;
+            Vector right;
+            if (row == 0 && startTangent is Vector tangent) {
+                // 始点の接線を固定する: 1·m(start) = startTangent
+                (diagonal[row], right) = (1.0, tangent);
+            } else if (row == 0) {
+                // 始点の自然スプラインの条件: 2·m0 + m1 = 3·(P1 − P0)
+                (diagonal[row], upper[row], right) = (2.0, 1.0, 3.0 * (points[index + 1] - points[index]));
+            } else if (row == count - 1) {
+                // 終点の自然スプラインの条件: m(n−2) + 2·m(n−1) = 3·(P(n−1) − P(n−2))
+                (lower[row], diagonal[row], right) = (1.0, 2.0, 3.0 * (points[index] - points[index - 1]));
+            } else {
+                // 内側の点 (つなぎ目で 2 階微分が一致する条件): m(i−1) + 4·m(i) + m(i+1) = 3·(P(i+1) − P(i−1))
+                (lower[row], diagonal[row], upper[row], right) = (1.0, 4.0, 1.0, 3.0 * (points[index + 1] - points[index - 1]));
+            }
+            (rightX[row], rightY[row]) = (right.X, right.Y);
+        }
+        // x 座標と y 座標は同じ係数行列なので、右辺だけを替えて 2 回解く
+        return ToVectors(SolveTridiagonal(lower, diagonal, upper, rightX), SolveTridiagonal(lower, diagonal, upper, rightY));
+    }
+
+    // 閉じた曲線 (点が 3 個以上) の各通過点での接線を、巡回三重対角の連立方程式 A·m = r として解く。
+    // A は対角 4、その左右 1 で、角 A[0, n−1] と A[n−1, 0] も 1 になる。
+    // Sherman-Morrison の公式: A = T + u·vᵀ (u = (γ, 0, …, 0, 1)ᵀ、v = (1, 0, …, 0, 1/γ)ᵀ) と分けると、
+    // T (角の無い三重対角) について T·w = r と T·z = u を解いて、m = w − (vᵀw / (1 + vᵀz))·z になる
+    static Vector[] SolveClosedSplineTangents(IList<Point> points)
+    {
+        // γ を対角と同じ大きさ (符号は逆) にすると、T の両端の対角が 4 − γ = 8、4 − 1/γ = 4.25 になり、対角優位が保たれる
+        const double gamma = -4.0;
+
+        var count    = points.Count;
+        var lower    = new double[count];
+        var diagonal = new double[count];
+        var upper    = new double[count];
+        var rightX   = new double[count];
+        var rightY   = new double[count];
+        var u        = new double[count];
+        for (var index = 0; index < count; index++) {
+            lower[index]    = index == 0         ? 0.0 : 1.0;
+            upper[index]    = index == count - 1 ? 0.0 : 1.0;
+            diagonal[index] = 4.0;
+            // 右辺 3·(P(i+1) − P(i−1))。添字は環状 (n を法とする) にたどる
+            var right       = 3.0 * (points[(index + 1) % count] - points[(index + count - 1) % count]);
+            (rightX[index], rightY[index]) = (right.X, right.Y);
+        }
+        // A から u·vᵀ を引いた残りが T。u·vᵀ は (0, 0) に γ、(n−1, n−1) に 1/γ、二つの角に 1 を持つ
+        diagonal[0]         -= gamma;
+        diagonal[count - 1] -= 1.0 / gamma;
+        u[0]                 = gamma;
+        u[count - 1]         = 1.0;
+
+        var x = SolveTridiagonal(lower, diagonal, upper, rightX);
+        var y = SolveTridiagonal(lower, diagonal, upper, rightY);
+        var z = SolveTridiagonal(lower, diagonal, upper, u);
+        // vᵀz と vᵀw (w は x 座標・y 座標それぞれの解) から、z をどれだけ引けばよいかを求める
+        var denominator = 1.0 + z[0] + z[count - 1] / gamma;
+        var factorX     = (x[0] + x[count - 1] / gamma) / denominator;
+        var factorY     = (y[0] + y[count - 1] / gamma) / denominator;
+        for (var index = 0; index < count; index++) {
+            x[index] -= factorX * z[index];
+            y[index] -= factorY * z[index];
+        }
+        return ToVectors(x, y);
+    }
+
+    // 三重対角の連立方程式 lower[i]·x(i−1) + diagonal[i]·x(i) + upper[i]·x(i+1) = right[i] を、
+    // トーマス法 (前進消去と後退代入) で解く。lower[0] と upper[n−1] は使わない。
+    // 対角成分が優位な行列を前提にしているので、ピボット選択はしない
+    static double[] SolveTridiagonal(double[] lower, double[] diagonal, double[] upper, double[] right)
+    {
+        var count        = diagonal.Length;
+        var reducedUpper = new double[count];   // 前進消去後の upper (対角を 1 に正規化したもの)
+        var reducedRight = new double[count];   // 前進消去後の right
+        // 前進消去: 各行から 1 つ上の行の lower 倍を引き、左側の係数を消していく
+        for (var index = 0; index < count; index++) {
+            var previousUpper = index == 0 ? 0.0 : reducedUpper[index - 1];
+            var previousRight = index == 0 ? 0.0 : reducedRight[index - 1];
+            var denominator   = diagonal[index] - lower[index] * previousUpper;
+            reducedUpper[index] = upper[index] / denominator;
+            reducedRight[index] = (right[index] - lower[index] * previousRight) / denominator;
+        }
+        // 後退代入: 最後の行から順に、1 つ下の行の解を使って求める
+        var x = new double[count];
+        x[count - 1] = reducedRight[count - 1];
+        for (var index = count - 2; index >= 0; index--)
+            x[index] = reducedRight[index] - reducedUpper[index] * x[index + 1];
+        return x;
+    }
+
+    // x 座標の列と y 座標の列を、ベクトルの列にまとめる
+    static Vector[] ToVectors(double[] x, double[] y)
+        => [.. x.Zip(y, (vx, vy) => new Vector(vx, vy))];
+
+    // 通過点と各通過点での接線から、ベジエ点列 [P0, C1, C2, P1, C1, C2, P2, …] を作る。
+    // 区間 P(i) → P(i+1) の制御点は C1 = P(i) + m(i) / 3、C2 = P(i+1) − m(i+1) / 3 (3 次エルミート曲線をベジエで表したもの)。
+    // isClosed が true なら、最後に P(n−1) → P0 の区間も加えて閉じる
+    static IEnumerable<Point> ToHermiteBezier(IList<Point> points, IList<Vector> tangents, bool isClosed)
+    {
+        var count        = points.Count;
+        var segmentCount = isClosed ? count : count - 1;
+        yield return points[0];
+        for (var index = 0; index < segmentCount; index++) {
+            var next = (index + 1) % count;
+            yield return points[index] + tangents[index] / 3.0;
+            yield return points[next ] - tangents[next ] / 3.0;
+            yield return points[next ];
         }
     }
 }

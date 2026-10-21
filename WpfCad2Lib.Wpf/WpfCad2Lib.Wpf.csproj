@@ -12,4 +12,8 @@
     <ProjectReference Include="..\WpfCad2Lib.Core\WpfCad2Lib.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="BezierSamples.Tests" />
+  </ItemGroup>
+
 </Project>
