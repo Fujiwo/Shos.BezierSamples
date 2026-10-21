@@ -16,10 +16,10 @@ namespace WpfCad2Lib.Wpf
 
     class MouseEventConverter
     {
-        public event Action<Point> Click    ;
-        public event Action<Point> DragStart;
-        public event Action<Point> Dragging ;
-        public event Action<Point> DragEnd  ;
+        public event Action<Point>? Click;
+        public event Action<Point>? DragStart;
+        public event Action<Point>? Dragging;
+        public event Action<Point>? DragEnd;
 
         const double          dragStartLength   = 10.0;
 
@@ -83,20 +83,17 @@ namespace WpfCad2Lib.Wpf
 
         void RaiseClick(Point position)
         {
-            if (Click != null)
-                Click(position);
+            Click?.Invoke(position);
         }
 
         void RaiseDragStart(Point position)
         {
-            if (DragStart != null)
-                DragStart(position);
+            DragStart?.Invoke(position);
         }
 
         void RaiseDragging(Point position)
         {
-            if (Dragging != null)
-                Dragging(position);
+            Dragging?.Invoke(position);
         }
 
         void RaizeDraggingWithDraggingPositions()
@@ -108,8 +105,7 @@ namespace WpfCad2Lib.Wpf
 
         void RaiseDragEnd(Point position)
         {
-            if (DragEnd != null)
-                DragEnd(position);
+            DragEnd?.Invoke(position);
         }
     }
 }

@@ -11,8 +11,8 @@ namespace WpfCad2Lib.Wpf
     public partial class View : UserControl
     {
         readonly MouseEventConverter mouseEventConverter = new MouseEventConverter();
-        Model                        model               = null;
-        Controller                   controller          = null;
+        Model                        model               = null!;
+        Controller                   controller          = null!;
         Device                       device              = new Device();
 
         public Model Model

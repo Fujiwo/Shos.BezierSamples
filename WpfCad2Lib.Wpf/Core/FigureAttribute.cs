@@ -103,7 +103,7 @@ namespace WpfCad2Lib.Wpf
         {
             text.Stroke          = Helper.CreateStrokeBrush(fillColor.IsDark() ? Common.DefaultLightColor : Common.DefaultDarkColor);
             text.StrokeThickness = strokeThickness;
-            text.Fill            = isFilled ? Helper.CreateFillBrush(fillColor) : null;
+            text.Fill            = isFilled ? Helper.CreateFillBrush(fillColor) : Brushes.Transparent;
             text.FontSize        = fontSize;
             text.Effect          = Common.DefaultShadowEffect;
         }

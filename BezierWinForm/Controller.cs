@@ -10,6 +10,8 @@ namespace BezierWinForm
 
         BezierLine? bezierLine = null;
 
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Model? Model { get; set; }
 
         public Controller() => InitializeComponent();

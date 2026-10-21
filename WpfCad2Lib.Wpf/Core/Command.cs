@@ -7,8 +7,8 @@ namespace WpfCad2Lib.Wpf
 {
     public abstract class Command : IMouseAccepter
     {
-        public Model               Model             { protected get; set; }
-        public UIElementCollection ElementCollection { protected get; set; }
+        public Model?               Model             { protected get; set; }
+        public UIElementCollection? ElementCollection { protected get; set; }
 
         public virtual bool canClick { get { return false; } }
         public virtual bool canDrag  { get { return true ; } }
@@ -23,18 +23,22 @@ namespace WpfCad2Lib.Wpf
 
     public abstract class AddCommand : Command
     {
-        protected Point  StartPosition { get; private set; }
-        protected Figure Figure        { get; private set; }
+        protected Point   StartPosition { get; private set; }
+        protected Figure? Figure        { get; private set; }
 
         public override void OnClick(Point position)
         {
+            if (ElementCollection == null)
+                return;
+
             if (Figure == null)
                 InitializeFigure();
-            if (Figure.IsValid) {
+
+            if (Figure != null && Figure.IsValid) {
                 Figure.AddElements(ElementCollection, position);
-                if (Model != null)
-                    Model.Add(Figure);
+                Model?.Add(Figure);
             }
+
             Figure = null;
         }
 
@@ -46,21 +50,29 @@ namespace WpfCad2Lib.Wpf
 
         public override void OnDragging(Point position)
         {
+            if (ElementCollection == null)
+                return;
+
             if (Figure == null) {
                 InitializeFigure();
-                Figure.AddElements(ElementCollection, StartPosition);
+                Figure?.AddElements(ElementCollection, StartPosition);
             }
-            Figure.SetNext(position);
+
+            Figure?.SetNext(position);
         }
 
         public override void OnDragEnd(Point position)
         {
+            if (ElementCollection == null || Figure == null)
+                return;
+
             Figure.SetNext(position);
             if (!Figure.IsValid)
                 Figure.RemoveElements(ElementCollection);
-            else if (Model != null)
-                Model.Add(Figure);
-            Figure   = null;
+            else
+                Model?.Add(Figure);
+
+            Figure = null;
         }
 
         protected abstract Figure CreateFigure();

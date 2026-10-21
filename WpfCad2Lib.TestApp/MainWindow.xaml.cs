@@ -45,7 +45,8 @@ namespace WpfCad2Lib.TestApp
         static string GetImagePath()
         {
             var location = System.Reflection.Assembly.GetExecutingAssembly().Location;
-            var path = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(location), @"Resources\sample.jpg");
+            var directory = System.IO.Path.GetDirectoryName(location) ?? AppContext.BaseDirectory;
+            var path = System.IO.Path.Combine(directory, @"Resources\sample.jpg");
             return path;
         }
 

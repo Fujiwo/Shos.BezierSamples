@@ -6,19 +6,21 @@ namespace WpfCad2Lib.Wpf
 {
     public class Controller : IMouseAccepter
     {
-        Command command = null;
+        Command? command;
 
-        public Model               Model             { private get; set; }
-        public UIElementCollection ElementCollection { private get; set; }
+        public Model?               Model             { private get; set; }
+        public UIElementCollection? ElementCollection { private get; set; }
 
         public Command Command
         {
             set
             {
-                command                   = value;
-                Debug.Assert(Model  != null);
-                command.Model             = Model;
+                command = value;
+
+                Debug.Assert(Model != null);
                 Debug.Assert(ElementCollection != null);
+
+                command.Model             = Model;
                 command.ElementCollection = ElementCollection;
                 command.OnStart();
             }

@@ -14,12 +14,12 @@ namespace WpfCad2Lib.Wpf
                 Add, Remove, Update
             }
 
-            public UndoType Type        { get; private set; }
-            public bool     IsStart     { get;         set; }
-            public Figure   OlderFigure { get; private set; }
-            public Figure   NewerFigure { get; private set; }
+            public UndoType Type         { get; private set; }
+            public bool     IsStart      { get;         set; }
+            public Figure?  OlderFigure  { get; private set; }
+            public Figure?  NewerFigure  { get; private set; }
 
-            UndoData(UndoType type, Figure olderFigure, Figure newerFigure)
+            UndoData(UndoType type, Figure? olderFigure, Figure? newerFigure)
             {
                 //if (olderFigure != null)
                 //    olderFigure.IsSelected = false;
@@ -106,7 +106,7 @@ namespace WpfCad2Lib.Wpf
                 bottom = 0;
             }
 
-            UndoData Pop()
+            UndoData? Pop()
             {
                 if (!CanPop)
                     return null;
@@ -114,7 +114,7 @@ namespace WpfCad2Lib.Wpf
                 return data[current];
             }
 
-            UndoData Forward()
+            UndoData? Forward()
             {
                 if (!CanForward)
                     return null;
@@ -197,18 +197,22 @@ namespace WpfCad2Lib.Wpf
         {
             switch (_undoData.Type) {
                 case UndoData.UndoType.Add:
-                    figures.Remove(_undoData.NewerFigure);
+                    if (_undoData.NewerFigure != null)
+                        figures.Remove(_undoData.NewerFigure);
                     break;
                 case UndoData.UndoType.Remove:
-                    figures.Add(_undoData.OlderFigure);
+                    if (_undoData.OlderFigure != null)
+                        figures.Add(_undoData.OlderFigure);
                     break;
                 case UndoData.UndoType.Update:
-                    int index = figures.IndexOf(_undoData.NewerFigure);
-                    if (index >= 0) {
-                        figures.Insert(index, _undoData.OlderFigure);
-                        figures.Remove(_undoData.NewerFigure);
-                    } else {
-                        Debug.Assert(false);
+                    if (_undoData.OlderFigure != null && _undoData.NewerFigure != null) {
+                        int index = figures.IndexOf(_undoData.NewerFigure);
+                        if (index >= 0) {
+                            figures.Insert(index, _undoData.OlderFigure);
+                            figures.Remove(_undoData.NewerFigure);
+                        } else {
+                            Debug.Assert(false);
+                        }
                     }
                     break;
             }
@@ -218,18 +222,22 @@ namespace WpfCad2Lib.Wpf
         {
             switch (_undoData.Type) {
                 case UndoData.UndoType.Add:
-                    figures.Add(_undoData.NewerFigure);
+                    if (_undoData.NewerFigure != null)
+                        figures.Add(_undoData.NewerFigure);
                     break;
                 case UndoData.UndoType.Remove:
-                    figures.Remove(_undoData.OlderFigure);
+                    if (_undoData.OlderFigure != null)
+                        figures.Remove(_undoData.OlderFigure);
                     break;
                 case UndoData.UndoType.Update:
-                    int index = figures.IndexOf(_undoData.OlderFigure);
-                    if (index >= 0) {
-                        figures.Insert(index, _undoData.NewerFigure);
-                        figures.Remove(_undoData.OlderFigure);
-                    } else {
-                        Debug.Assert(false);
+                    if (_undoData.OlderFigure != null && _undoData.NewerFigure != null) {
+                        int index = figures.IndexOf(_undoData.OlderFigure);
+                        if (index >= 0) {
+                            figures.Insert(index, _undoData.NewerFigure);
+                            figures.Remove(_undoData.OlderFigure);
+                        } else {
+                            Debug.Assert(false);
+                        }
                     }
                     break;
             }

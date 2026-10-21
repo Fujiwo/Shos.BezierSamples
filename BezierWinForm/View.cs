@@ -1,12 +1,19 @@
-﻿using System.Drawing;
+﻿using System.ComponentModel;
+using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
+
+
 
 namespace BezierWinForm
 {
     public partial class View : UserControl
     {
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Model? DataSource { get; set; }
+
+
 
         public View()
         {

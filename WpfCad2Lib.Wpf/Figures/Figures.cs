@@ -126,21 +126,21 @@ namespace WpfCad2Lib.Wpf
     public class CurveFigure : Figure
     {
         const double sensitivity = 8.0;
-        List<Point>  position    = null;
+        readonly List<Point> position = new List<Point>();
 
         protected override Rect? Bounds
         {
-            get { return position.ToRect(); }
+            get { return position.Count == 0 ? null : position.ToRect(); }
         }
 
         public override bool IsValid
         {
             get { return position.Count > 2; }
         }
-        
+
         protected override double GetDistance(Point point, double nearDistance)
         {
-            return Geo.Distance(point, position);
+            return position.Count == 0 ? double.MaxValue : Geo.Distance(point, position);
         }
 
         protected override IEnumerable<Point> SelectorPoints
@@ -161,12 +161,12 @@ namespace WpfCad2Lib.Wpf
 
         protected override void SetFirst(IEnumerable<FrameworkElement> elements, Point point)
         {
-            position = new List<Point> { point };
+            position.Clear();
+            position.Add(point);
         }
 
         protected override void SetNext(IEnumerable<FrameworkElement> elements, Point point)
         {
-            Debug.Assert(position != null);
             if (position.Count > 0) {
                 var lastPoint = position[position.Count - 1];
                 if ((point - lastPoint).Length > sensitivity)

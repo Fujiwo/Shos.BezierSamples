@@ -9,10 +9,10 @@ namespace WpfCad2Lib.Wpf
 {
     public abstract class Figure
     {
-        FigureAttribute               attribute = new FigureAttribute();
-        List<FrameworkElement>        elements  = null;
-        List<Shape>                   selectors = null;
-        int                           selected  = -1;
+        FigureAttribute          attribute = new FigureAttribute();
+        List<FrameworkElement>?   elements;
+        List<Shape>?              selectors;
+        int                       selected  = -1;
 
         public FigureAttribute Attribute
         {
@@ -46,12 +46,16 @@ namespace WpfCad2Lib.Wpf
         public void AddElements(UIElementCollection elementCollection)
         {
             SetElements();
+            if (elements == null)
+                return;
             elements.ForEach(element => elementCollection.Add(element));
         }
 
         public void AddElements(UIElementCollection elementCollection, Point firstPoint)
         {
             InitializeElements();
+            if (elements == null)
+                return;
             elements.ForEach(element => elementCollection.Add(element));
             SetFirst(elements, firstPoint);
         }
@@ -91,6 +95,8 @@ namespace WpfCad2Lib.Wpf
 
         public void SetNext(Point point)
         {
+            if (elements == null)
+                return;
             SetNext(elements, point);
         }
 
@@ -122,12 +128,12 @@ namespace WpfCad2Lib.Wpf
 
         protected abstract IEnumerable<FrameworkElement> GetInitialElements();
 
-        protected virtual IEnumerable<FrameworkElement> ToElements()
+        protected virtual IEnumerable<FrameworkElement>? ToElements()
         {
             return null;
         }
 
-        protected virtual IEnumerable<FrameworkElement> RegetElements()
+        protected virtual IEnumerable<FrameworkElement>? RegetElements()
         {
             return null;
         }
@@ -139,7 +145,7 @@ namespace WpfCad2Lib.Wpf
 
         void SetElements()
         {
-            elements = ToElements().ToList();
+            elements = ToElements()?.ToList() ?? new List<FrameworkElement>();
             attribute.SetAttribute(elements, IsFilled);
             attribute.PropertyChanged += delegate { OnAttributeChanged(); };
         }
@@ -175,7 +181,8 @@ namespace WpfCad2Lib.Wpf
             var newElements = RegetElements();
             if (newElements != null)
                 elements = newElements.ToList();
-            attribute.SetAttribute(elements, IsFilled);
+            if (elements != null)
+                attribute.SetAttribute(elements, IsFilled);
         }
 
         static void SetSelectorAttribute(Shape element)

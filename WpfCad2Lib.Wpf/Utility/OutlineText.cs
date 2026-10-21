@@ -6,8 +6,8 @@ namespace WpfCad2Lib.Wpf
 {
 	public class OutlineText : FrameworkElement
 	{
-		Geometry textGeometry          = null;
-        Geometry textHighLightGeometry = null;
+		Geometry? textGeometry;
+		Geometry? textHighLightGeometry;
 
         public OutlineText() => Effect = Common.DefaultShadowEffect;
 
@@ -69,15 +69,16 @@ namespace WpfCad2Lib.Wpf
 			// Create the formatted text based on the properties set.
 			var formattedText = new FormattedText(
 				Text,
-				CultureInfo.CurrentCulture ,
+				CultureInfo.CurrentCulture,
 				FlowDirection.LeftToRight,
 				new Typeface(
 					Font,
 					fontStyle,
 					fontWeight,
 					FontStretches.Normal),
-					FontSize,
-					Brushes.Black // This brush does not matter since we use the geometry of the text. 
+				FontSize,
+				Brushes.Black,
+				VisualTreeHelper.GetDpi(this).PixelsPerDip
 				);
 
 			// Build the geometry object that represents the text.
