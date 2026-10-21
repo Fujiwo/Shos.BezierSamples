@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="470" viewBox="0 0 640 470" font-family="'Segoe UI','Yu Gothic UI','Hiragino Sans','Noto Sans JP',sans-serif" role="img" aria-label="通過点 P0〜P3 から区間 P1→P2 のベジエ制御点を求める">
+  <title>通過点 P0〜P3 から区間 P1→P2 のベジエ制御点を求める</title>
+  <rect x="0" y="0" width="640" height="470" rx="12" fill="#ffffff" stroke="#d0d7de"/>
+  <text x="24" y="36" font-size="18" font-weight="700" fill="#24292f">区間 P1 → P2 の制御点の求め方</text>
+  <polyline points="70,300 210,130 420,150 540,320" fill="none" stroke="#8c959f" stroke-width="1.5" stroke-dasharray="2 4"/>
+  <line x1="70" y1="300" x2="420" y2="150" stroke="#d1495b" stroke-width="1.5" stroke-dasharray="6 5"/>
+  <line x1="210" y1="130" x2="540" y2="320" stroke="#2a9d55" stroke-width="1.5" stroke-dasharray="6 5"/>
+  <line x1="210" y1="130" x2="268.3" y2="105" stroke="#d1495b" stroke-width="3.5" stroke-linecap="round"/>
+  <line x1="420" y1="150" x2="365" y2="118.3" stroke="#2a9d55" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M210,130 C268.3,105 365,118.3 420,150" fill="none" stroke="#1f6feb" stroke-width="4" stroke-linecap="round"/>
+  <rect x="263.3" y="100" width="10" height="10" fill="#ffffff" stroke="#d1495b" stroke-width="2.5"/>
+  <text x="262.3" y="91" font-size="15" font-weight="600" fill="#d1495b" text-anchor="middle">C1</text>
+  <rect x="360" y="113.3" width="10" height="10" fill="#ffffff" stroke="#2a9d55" stroke-width="2.5"/>
+  <text x="371" y="104.3" font-size="15" font-weight="600" fill="#2a9d55" text-anchor="middle">C2</text>
+  <circle cx="70" cy="300" r="5" fill="#24292f"/>
+  <text x="70" y="328" font-size="16" font-weight="600" fill="#24292f" text-anchor="middle">P0</text>
+  <circle cx="210" cy="130" r="5" fill="#24292f"/>
+  <text x="188" y="130" font-size="16" font-weight="600" fill="#24292f" text-anchor="middle">P1</text>
+  <circle cx="420" cy="150" r="5" fill="#24292f"/>
+  <text x="446" y="156" font-size="16" font-weight="600" fill="#24292f" text-anchor="middle">P2</text>
+  <circle cx="540" cy="320" r="5" fill="#24292f"/>
+  <text x="540" y="348" font-size="16" font-weight="600" fill="#24292f" text-anchor="middle">P3</text>
+  <text x="205" y="261" font-size="13" fill="#d1495b">P2 − P0 (弦)</text>
+  <text x="403" y="229" font-size="13" fill="#2a9d55">P3 − P1 (弦)</text>
+  <text x="315" y="174" font-size="14" font-weight="600" fill="#1f6feb" text-anchor="middle">描かれる区間</text>
+  <rect x="24" y="380" width="592" height="70" rx="8" fill="#f6f8fa" stroke="#d0d7de"/>
+  <text x="40" y="408" font-size="15" fill="#24292f"><tspan fill="#d1495b" font-weight="700">C1 = P1 + (P2 − P0) / 6</tspan>　… P1 での向きは、両隣を結ぶ弦 P0→P2 と平行</text>
+  <text x="40" y="434" font-size="15" fill="#24292f"><tspan fill="#2a9d55" font-weight="700">C2 = P2 − (P3 − P1) / 6</tspan>　… P2 での向きは、両隣を結ぶ弦 P1→P3 と平行</text>
+</svg>
