@@ -1,0 +1,19 @@
+# 文字コード・改行・インデントを統一する (Reviews/2026-10-21-repository-review.md 3.8)
+root = true
+
+[*]
+end_of_line  = crlf
+indent_style = space
+
+[*.{cs,xaml,cpp,h}]
+charset     = utf-8-bom
+indent_size = 4
+
+[*.{csproj,vcxproj,filters,resx,settings,config}]
+indent_size = 2
+
+[*.{csproj,filters,resx,settings,sln}]
+charset = utf-8-bom
+
+[*.{md,json,txt,vcxproj,config}]
+charset = utf-8

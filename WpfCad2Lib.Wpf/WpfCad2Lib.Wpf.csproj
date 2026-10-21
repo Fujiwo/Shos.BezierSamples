@@ -12,10 +12,4 @@
     <ProjectReference Include="..\WpfCad2Lib.Core\WpfCad2Lib.Core.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <None Update="Resources\sample.jpg">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-
 </Project>

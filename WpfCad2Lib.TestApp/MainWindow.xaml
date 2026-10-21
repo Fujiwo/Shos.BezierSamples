@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:l="clr-namespace:WpfCad2Lib.TestApp"
         xmlns:w="clr-namespace:WpfCad2Lib.Wpf;assembly=WpfCad2Lib.Wpf"
-        Title="MainWindow" Height="600" Width="800">
+        Title="WpfCad2Lib TestApp" Height="600" Width="800">
     <Window.CommandBindings>
         <CommandBinding Command="{x:Static l:MainWindow.EditCommand}" Executed="FigureSelect" />
         <CommandBinding Command="{x:Static l:MainWindow.LineCommand}" Executed="FigureLine" />

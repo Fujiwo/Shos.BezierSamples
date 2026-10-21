@@ -1,54 +1,54 @@
-using System.Globalization;
+ï»¿using System.Globalization;
 using System.Windows;
 using System.Windows.Media;
 
 namespace WpfCad2Lib.Wpf
 {
-	public class OutlineText : FrameworkElement
-	{
-		Geometry? textGeometry;
-		Geometry? textHighLightGeometry;
+    public class OutlineText : FrameworkElement
+    {
+        Geometry? textGeometry;
+        Geometry? textHighLightGeometry;
 
         public OutlineText() => Effect = Common.DefaultShadowEffect;
 
-		protected override Size MeasureOverride(Size a)
-			=> textHighLightGeometry is null ? new Size(0, 0) : textHighLightGeometry.Bounds.Size;
+        protected override Size MeasureOverride(Size a)
+            => textHighLightGeometry is null ? new Size(0, 0) : textHighLightGeometry.Bounds.Size;
 
         static void OnOutlineTextInvalidated(DependencyObject d, DependencyPropertyChangedEventArgs e)
-			=> ((OutlineText)d).CreateText();
+            => ((OutlineText)d).CreateText();
 
         protected override void OnRender(DrawingContext drawingContext)
         {
-            // ‰æ—p‚Ìƒyƒ“‚ğì¬‚·‚é
+            // ç¸å–ç”¨ã®ãƒšãƒ³ã‚’ä½œæˆã™ã‚‹
             var geometryPen = new Pen(Stroke, StrokeThickness);
 
-            // ‰sŠpÚ‡•”‚Ìİ’è
-            // ¦ƒcƒm‚ğo‚³‚È‚¢‚½‚ß‚É‚ÍAÚ‡•”‚ğ‰~ŒÊ‚É‚·‚é‚©AMiterLimit‚ğ0‚Éİ’è‚·‚é
+            // é‹­è§’æ¥åˆéƒ¨ã®è¨­å®š
+            // â€»ãƒ„ãƒã‚’å‡ºã•ãªã„ãŸã‚ã«ã¯ã€æ¥åˆéƒ¨ã‚’å††å¼§ã«ã™ã‚‹ã‹ã€MiterLimitã‚’0ã«è¨­å®šã™ã‚‹
 
-            // ƒvƒƒpƒeƒB‚Åİ’è‚³‚ê‚½Ú‘±•û–@‚ğ—˜—p
+            // ãƒ—ãƒ­ãƒ‘ãƒ†ã‚£ã§è¨­å®šã•ã‚ŒãŸæ¥ç¶šæ–¹æ³•ã‚’åˆ©ç”¨
             geometryPen.LineJoin = OutlineJoin;
 
-            // Miter‚ª‘I‘ğ‚³‚ê‚Ä‚¢‚é‚Æ‚«‚ÍA’·‚³§ŒÀİ’è
+            // MiterãŒé¸æŠã•ã‚Œã¦ã„ã‚‹ã¨ãã¯ã€é•·ã•åˆ¶é™è¨­å®š
             if (geometryPen.LineJoin == PenLineJoin.Miter)
                 geometryPen.MiterLimit = OutlineMiterLimit;
 
-            if (EnableFill == true) //“h‚è‚Â‚Ô‚µ‚ ‚è
-			{
-                // ‹«ŠEü•`‰æŒã‚É“h‚è‚Â‚Ô‚µ‚ğã‘‚«‚·‚éê‡
+            if (EnableFill == true) //å¡—ã‚Šã¤ã¶ã—ã‚ã‚Š
+            {
+                // å¢ƒç•Œç·šæç”»å¾Œã«å¡—ã‚Šã¤ã¶ã—ã‚’ä¸Šæ›¸ãã™ã‚‹å ´åˆ
                 if (OverFill == true) {
-                    // ‹«ŠEü‚¾‚¯æ‚É•`‰æ•`‰æ
+                    // å¢ƒç•Œç·šã ã‘å…ˆã«æç”»æç”»
                     drawingContext.DrawGeometry(null, geometryPen, textGeometry);
-                    // “h‚è‚Â‚Ô‚µ‚Ì‚İ•`‰æ
+                    // å¡—ã‚Šã¤ã¶ã—ã®ã¿æç”»
                     drawingContext.DrawGeometry(Fill, null, textGeometry);
                 }
-                    // ‹«ŠEü‚Ì“à‘¤‚ğ“h‚è‚Â‚Ô‚·ê‡i’Êíˆ—j
+                    // å¢ƒç•Œç·šã®å†…å´ã‚’å¡—ã‚Šã¤ã¶ã™å ´åˆï¼ˆé€šå¸¸å‡¦ç†ï¼‰
                 else {
                     drawingContext.DrawGeometry(Fill, geometryPen, textGeometry);
                 }
             }
-                //‹«ŠEü‚Ì‚İ
+                //å¢ƒç•Œç·šã®ã¿
             else {
-                // ‹«ŠEü‚Ì‚İ•`‰æ
+                // å¢ƒç•Œç·šã®ã¿æç”»
                 drawingContext.DrawGeometry(null, geometryPen, textGeometry);
             }
 
@@ -58,270 +58,270 @@ namespace WpfCad2Lib.Wpf
         }
 
 
-		/// <summary>
-		/// Create the outline geometry based on the formatted text.
-		/// </summary>
-		public void CreateText()
-		{
+        /// <summary>
+        /// Create the outline geometry based on the formatted text.
+        /// </summary>
+        public void CreateText()
+        {
             var fontStyle  = Italic ? FontStyles.Italic : FontStyles.Normal ;
-			var fontWeight = Bold   ? FontWeights.Bold  : FontWeights.Medium;
+            var fontWeight = Bold   ? FontWeights.Bold  : FontWeights.Medium;
 
-			// Create the formatted text based on the properties set.
-			var formattedText = new FormattedText(
-				Text,
-				CultureInfo.CurrentCulture,
-				FlowDirection.LeftToRight,
-				new Typeface(
-					Font,
-					fontStyle,
-					fontWeight,
-					FontStretches.Normal),
-				FontSize,
-				Brushes.Black,
-				VisualTreeHelper.GetDpi(this).PixelsPerDip
-				);
+            // Create the formatted text based on the properties set.
+            var formattedText = new FormattedText(
+                Text,
+                CultureInfo.CurrentCulture,
+                FlowDirection.LeftToRight,
+                new Typeface(
+                    Font,
+                    fontStyle,
+                    fontWeight,
+                    FontStretches.Normal),
+                FontSize,
+                Brushes.Black,
+                VisualTreeHelper.GetDpi(this).PixelsPerDip
+                );
 
-			// Build the geometry object that represents the text.
-			textGeometry = formattedText.BuildGeometry(new Point(0, 0));
+            // Build the geometry object that represents the text.
+            textGeometry = formattedText.BuildGeometry(new Point(0, 0));
 
-			// MeasureOverride ‚ÌŠOÚ‹éŒ`ƒTƒCƒY‚Å—˜—p‚·‚é‚½‚ßAí‚ÉŠO˜g‚ÌƒWƒIƒƒgƒŠ‚ğ¶¬‚µ‚Ä‚¨‚­
-			// Build the geometry object that represents the text hightlight.
-			textHighLightGeometry = formattedText.BuildHighlightGeometry(new Point(0, 0));
-		}
+            // MeasureOverride ã®å¤–æ¥çŸ©å½¢ã‚µã‚¤ã‚ºã§åˆ©ç”¨ã™ã‚‹ãŸã‚ã€å¸¸ã«å¤–æ ã®ã‚¸ã‚ªãƒ¡ãƒˆãƒªã‚’ç”Ÿæˆã—ã¦ãŠã
+            // Build the geometry object that represents the text hightlight.
+            textHighLightGeometry = formattedText.BuildHighlightGeometry(new Point(0, 0));
+        }
 
-		public bool EnableFill
-		{
-			get { return (bool)GetValue(EnableFillProperty); }
-			set { SetValue(EnableFillProperty, value); }
-		}
+        public bool EnableFill
+        {
+            get { return (bool)GetValue(EnableFillProperty); }
+            set { SetValue(EnableFillProperty, value); }
+        }
 
-		public static readonly DependencyProperty EnableFillProperty = DependencyProperty.Register(
-			"EnableFill",
-			typeof(bool),
-			typeof(OutlineText),
-			new FrameworkPropertyMetadata(
-				true,
-				FrameworkPropertyMetadataOptions.AffectsRender,
-				new PropertyChangedCallback(OnOutlineTextInvalidated),
-				null
-				)
-			);
+        public static readonly DependencyProperty EnableFillProperty = DependencyProperty.Register(
+            "EnableFill",
+            typeof(bool),
+            typeof(OutlineText),
+            new FrameworkPropertyMetadata(
+                true,
+                FrameworkPropertyMetadataOptions.AffectsRender,
+                new PropertyChangedCallback(OnOutlineTextInvalidated),
+                null
+                )
+            );
 
-		public bool OverFill
-		{
-			get { return (bool)GetValue(OverFillProperty); }
-			set { SetValue(OverFillProperty, value); }
-		}
+        public bool OverFill
+        {
+            get { return (bool)GetValue(OverFillProperty); }
+            set { SetValue(OverFillProperty, value); }
+        }
 
-		public static readonly DependencyProperty OverFillProperty = DependencyProperty.Register(
-			"OverFill",
-			typeof(bool),
-			typeof(OutlineText),
-			new FrameworkPropertyMetadata(
-				true,
-				FrameworkPropertyMetadataOptions.AffectsRender,
-				new PropertyChangedCallback(OnOutlineTextInvalidated),
-				null
-				)
-			);
-	
-		public PenLineJoin OutlineJoin
-		{
-			get { return (PenLineJoin)GetValue(OutlineJoinProperty); }
-			set { SetValue(OutlineJoinProperty, value); }
-		}
+        public static readonly DependencyProperty OverFillProperty = DependencyProperty.Register(
+            "OverFill",
+            typeof(bool),
+            typeof(OutlineText),
+            new FrameworkPropertyMetadata(
+                true,
+                FrameworkPropertyMetadataOptions.AffectsRender,
+                new PropertyChangedCallback(OnOutlineTextInvalidated),
+                null
+                )
+            );
 
-		public static readonly DependencyProperty OutlineJoinProperty = 
-			DependencyProperty.Register(
-			"OutlineJoin",
-			typeof(PenLineJoin),
-			typeof(OutlineText),
-			new FrameworkPropertyMetadata(
-				PenLineJoin.Round,	// ƒfƒtƒHƒ‹ƒg‚ÅŠpŠÛ
-				FrameworkPropertyMetadataOptions.AffectsRender,
-				new PropertyChangedCallback(OnOutlineTextInvalidated),
-				null
-				)
-			);
+        public PenLineJoin OutlineJoin
+        {
+            get { return (PenLineJoin)GetValue(OutlineJoinProperty); }
+            set { SetValue(OutlineJoinProperty, value); }
+        }
 
-		public double OutlineMiterLimit
-		{
-			get { return (double)GetValue(OutlineMiterLimitProperty); }
-			set { SetValue(OutlineMiterLimitProperty, value); }
-		}
+        public static readonly DependencyProperty OutlineJoinProperty =
+            DependencyProperty.Register(
+            "OutlineJoin",
+            typeof(PenLineJoin),
+            typeof(OutlineText),
+            new FrameworkPropertyMetadata(
+                PenLineJoin.Round,  // ãƒ‡ãƒ•ã‚©ãƒ«ãƒˆã§è§’ä¸¸
+                FrameworkPropertyMetadataOptions.AffectsRender,
+                new PropertyChangedCallback(OnOutlineTextInvalidated),
+                null
+                )
+            );
 
-		public static readonly DependencyProperty OutlineMiterLimitProperty = DependencyProperty.Register(
-			"OutlineMiterLimit",
-			typeof(double),
-			typeof(OutlineText),
-			new FrameworkPropertyMetadata(
-				0.0,
-				FrameworkPropertyMetadataOptions.AffectsRender,
-				new PropertyChangedCallback(OnOutlineTextInvalidated),
-				null
-				)
-			);
-	
-		public bool Bold
-		{
-			get { return (bool)GetValue(BoldProperty); }
-			set { SetValue(BoldProperty, value); }
-		}
+        public double OutlineMiterLimit
+        {
+            get { return (double)GetValue(OutlineMiterLimitProperty); }
+            set { SetValue(OutlineMiterLimitProperty, value); }
+        }
+
+        public static readonly DependencyProperty OutlineMiterLimitProperty = DependencyProperty.Register(
+            "OutlineMiterLimit",
+            typeof(double),
+            typeof(OutlineText),
+            new FrameworkPropertyMetadata(
+                0.0,
+                FrameworkPropertyMetadataOptions.AffectsRender,
+                new PropertyChangedCallback(OnOutlineTextInvalidated),
+                null
+                )
+            );
+
+        public bool Bold
+        {
+            get { return (bool)GetValue(BoldProperty); }
+            set { SetValue(BoldProperty, value); }
+        }
 
         public static readonly DependencyProperty BoldProperty = DependencyProperty.Register(
-			"Bold",
-			typeof(bool),
-			typeof(OutlineText),
-			new FrameworkPropertyMetadata(
-				false,
-				FrameworkPropertyMetadataOptions.AffectsRender,
-				new PropertyChangedCallback(OnOutlineTextInvalidated),
-				null
-				)
-			);
+            "Bold",
+            typeof(bool),
+            typeof(OutlineText),
+            new FrameworkPropertyMetadata(
+                false,
+                FrameworkPropertyMetadataOptions.AffectsRender,
+                new PropertyChangedCallback(OnOutlineTextInvalidated),
+                null
+                )
+            );
 
-		public Brush Fill
-		{
-			get { return (Brush)GetValue(FillProperty); }
-			set { SetValue(FillProperty, value); }
-		}
+        public Brush Fill
+        {
+            get { return (Brush)GetValue(FillProperty); }
+            set { SetValue(FillProperty, value); }
+        }
 
-		public static readonly DependencyProperty FillProperty = DependencyProperty.Register(
-			"Fill",
-			typeof(Brush),
-			typeof(OutlineText),
-			new FrameworkPropertyMetadata(
+        public static readonly DependencyProperty FillProperty = DependencyProperty.Register(
+            "Fill",
+            typeof(Brush),
+            typeof(OutlineText),
+            new FrameworkPropertyMetadata(
                 new SolidColorBrush(Common.DefaultFillColor),
-				FrameworkPropertyMetadataOptions.AffectsRender,
-				new PropertyChangedCallback(OnOutlineTextInvalidated),
-				null
-				)
-			);
+                FrameworkPropertyMetadataOptions.AffectsRender,
+                new PropertyChangedCallback(OnOutlineTextInvalidated),
+                null
+                )
+            );
 
-		public FontFamily Font
-		{
-			get { return (FontFamily)GetValue(FontProperty); }
-			set { SetValue(FontProperty, value); }
-		}
+        public FontFamily Font
+        {
+            get { return (FontFamily)GetValue(FontProperty); }
+            set { SetValue(FontProperty, value); }
+        }
 
-		public static readonly DependencyProperty FontProperty = DependencyProperty.Register(
-			"Font",
-			typeof(FontFamily),
-			typeof(OutlineText),
-			new FrameworkPropertyMetadata(
+        public static readonly DependencyProperty FontProperty = DependencyProperty.Register(
+            "Font",
+            typeof(FontFamily),
+            typeof(OutlineText),
+            new FrameworkPropertyMetadata(
                 new FontFamily(Common.DefaultFontFamilyName),
-				FrameworkPropertyMetadataOptions.AffectsRender,
-				new PropertyChangedCallback(OnOutlineTextInvalidated),
-				null
-				)
-			);
+                FrameworkPropertyMetadataOptions.AffectsRender,
+                new PropertyChangedCallback(OnOutlineTextInvalidated),
+                null
+                )
+            );
 
-		public double FontSize
-		{
-			get { return (double)GetValue(FontSizeProperty); }
-			set { SetValue(FontSizeProperty, value); }
-		}
+        public double FontSize
+        {
+            get { return (double)GetValue(FontSizeProperty); }
+            set { SetValue(FontSizeProperty, value); }
+        }
 
-		public static readonly DependencyProperty FontSizeProperty = DependencyProperty.Register(
-			"FontSize",
-			typeof(double),
-			typeof(OutlineText),
-			new FrameworkPropertyMetadata(
-				 (double)Common.DefaultFontSize,
-				 FrameworkPropertyMetadataOptions.AffectsRender,
-				 new PropertyChangedCallback(OnOutlineTextInvalidated),
-				 null
-				 )
-			);
-
-		public bool Highlight
-		{
-			get { return (bool)GetValue(HighlightProperty); }
-			set { SetValue(HighlightProperty, value); }
-		}
-
-		public static readonly DependencyProperty HighlightProperty = DependencyProperty.Register(
-			"Highlight",
-			typeof(bool),
-			typeof(OutlineText),
-			new FrameworkPropertyMetadata(
-				 false,
-				 FrameworkPropertyMetadataOptions.AffectsRender,
-				 new PropertyChangedCallback(OnOutlineTextInvalidated),
-				 null
-				 )
-			);
-
-		public bool Italic
-		{
-			get { return (bool)GetValue(ItalicProperty); }
-			set { SetValue(ItalicProperty, value); }
-		}
-
-		public static readonly DependencyProperty ItalicProperty = DependencyProperty.Register(
-			"Italic",
-			typeof(bool),
-			typeof(OutlineText),
-			new FrameworkPropertyMetadata(
-				 false,
-				 FrameworkPropertyMetadataOptions.AffectsRender,
-				 new PropertyChangedCallback(OnOutlineTextInvalidated),
-				 null
-				 )
-			);
-
-		public Brush Stroke
-		{
-			get { return (Brush)GetValue(StrokeProperty); }
-			set { SetValue(StrokeProperty, value); }
-		}
-
-		public static readonly DependencyProperty StrokeProperty = DependencyProperty.Register(
-			"Stroke",
-			typeof(Brush),
-			typeof(OutlineText),
-			new FrameworkPropertyMetadata(
-				 new SolidColorBrush(Common.DefaultFontStrokeColor),
-				 FrameworkPropertyMetadataOptions.AffectsRender,
-				 new PropertyChangedCallback(OnOutlineTextInvalidated),
-				 null
-				 )
-			);
-
-		public double StrokeThickness
-		{
-            get { return (double)GetValue(StrokeThicknessProperty); }
-			set { SetValue(StrokeThicknessProperty, value); }
-		}
-
-		public static readonly DependencyProperty StrokeThicknessProperty = DependencyProperty.Register(
-			"StrokeThickness",
+        public static readonly DependencyProperty FontSizeProperty = DependencyProperty.Register(
+            "FontSize",
             typeof(double),
-			typeof(OutlineText),
-			new FrameworkPropertyMetadata(
-				 Common.DefaultStrokeThickness,
-				 FrameworkPropertyMetadataOptions.AffectsRender,
-				 new PropertyChangedCallback(OnOutlineTextInvalidated),
-				 null
-				 )
-			);
+            typeof(OutlineText),
+            new FrameworkPropertyMetadata(
+                 (double)Common.DefaultFontSize,
+                 FrameworkPropertyMetadataOptions.AffectsRender,
+                 new PropertyChangedCallback(OnOutlineTextInvalidated),
+                 null
+                 )
+            );
 
-		public string Text
-		{
-			get { return (string)GetValue(TextProperty); }
+        public bool Highlight
+        {
+            get { return (bool)GetValue(HighlightProperty); }
+            set { SetValue(HighlightProperty, value); }
+        }
+
+        public static readonly DependencyProperty HighlightProperty = DependencyProperty.Register(
+            "Highlight",
+            typeof(bool),
+            typeof(OutlineText),
+            new FrameworkPropertyMetadata(
+                 false,
+                 FrameworkPropertyMetadataOptions.AffectsRender,
+                 new PropertyChangedCallback(OnOutlineTextInvalidated),
+                 null
+                 )
+            );
+
+        public bool Italic
+        {
+            get { return (bool)GetValue(ItalicProperty); }
+            set { SetValue(ItalicProperty, value); }
+        }
+
+        public static readonly DependencyProperty ItalicProperty = DependencyProperty.Register(
+            "Italic",
+            typeof(bool),
+            typeof(OutlineText),
+            new FrameworkPropertyMetadata(
+                 false,
+                 FrameworkPropertyMetadataOptions.AffectsRender,
+                 new PropertyChangedCallback(OnOutlineTextInvalidated),
+                 null
+                 )
+            );
+
+        public Brush Stroke
+        {
+            get { return (Brush)GetValue(StrokeProperty); }
+            set { SetValue(StrokeProperty, value); }
+        }
+
+        public static readonly DependencyProperty StrokeProperty = DependencyProperty.Register(
+            "Stroke",
+            typeof(Brush),
+            typeof(OutlineText),
+            new FrameworkPropertyMetadata(
+                 new SolidColorBrush(Common.DefaultFontStrokeColor),
+                 FrameworkPropertyMetadataOptions.AffectsRender,
+                 new PropertyChangedCallback(OnOutlineTextInvalidated),
+                 null
+                 )
+            );
+
+        public double StrokeThickness
+        {
+            get { return (double)GetValue(StrokeThicknessProperty); }
+            set { SetValue(StrokeThicknessProperty, value); }
+        }
+
+        public static readonly DependencyProperty StrokeThicknessProperty = DependencyProperty.Register(
+            "StrokeThickness",
+            typeof(double),
+            typeof(OutlineText),
+            new FrameworkPropertyMetadata(
+                 Common.DefaultStrokeThickness,
+                 FrameworkPropertyMetadataOptions.AffectsRender,
+                 new PropertyChangedCallback(OnOutlineTextInvalidated),
+                 null
+                 )
+            );
+
+        public string Text
+        {
+            get { return (string)GetValue(TextProperty); }
             set { SetValue(TextProperty, value); }
-		}
+        }
 
-		public static readonly DependencyProperty TextProperty = DependencyProperty.Register(
-			"Text",
-			typeof(string),
-			typeof(OutlineText),
-			new FrameworkPropertyMetadata(
-				 "",
-				 FrameworkPropertyMetadataOptions.AffectsRender,
-				 new PropertyChangedCallback(OnOutlineTextInvalidated),
-				 null
-				 )
-			);
-	}
+        public static readonly DependencyProperty TextProperty = DependencyProperty.Register(
+            "Text",
+            typeof(string),
+            typeof(OutlineText),
+            new FrameworkPropertyMetadata(
+                 "",
+                 FrameworkPropertyMetadataOptions.AffectsRender,
+                 new PropertyChangedCallback(OnOutlineTextInvalidated),
+                 null
+                 )
+            );
+    }
 }

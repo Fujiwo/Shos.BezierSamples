@@ -25,21 +25,16 @@ namespace WpfCad2Lib.TestApp
         {
             InitializeComponent();
 
-            //new BitmapImage(new Uri("http://www.sokenss.co.jp/works/%E6%96%BD%E5%B7%A5%E4%BA%8B%E4%BE%8B%E2%91%A3.jpeg", UriKind.RelativeOrAbsolute));
-            //var bitmap = new BitmapImage();
-            //bitmap.BeginInit();
-            //bitmap.UriSource = new Uri(@"sample.jpg", UriKind.Relative);
-            //bitmap.EndInit();
-            //image.Source = new BitmapImage(new Uri("http://www.sokenss.co.jp/works/%E6%96%BD%E5%B7%A5%E4%BA%8B%E4%BE%8B%E2%91%A3.jpeg", UriKind.RelativeOrAbsolute));
-            //image.Source = new BitmapImage(new Uri("http://www.miyamoto-gumi.com/wp-content/uploads/2012/04/011.jpg", UriKind.RelativeOrAbsolute));
-            //image.Source = new BitmapImage(new Uri(@"Resoures\sample.jpg", UriKind.RelativeOrAbsolute));
-            //webBrowser.Navigate(new System.Uri(@"file:///C:/Users/g_kojima_fujio.FC/Dropbox/Source/WpfAppSample.2013.2.19/WpfCad2Lib.TestApp/Resources/sample.pdf", System.UriKind.RelativeOrAbsolute));
-            //webBrowser.Navigate(new System.Uri(@"http://www.miyamoto-gumi.com/wp-content/uploads/2012/04/011.jpg", System.UriKind.RelativeOrAbsolute));
-
             mvc = new MVC(view, new EditCommand());
-            var bitmap = new BitmapImage(new Uri(GetImagePath(), UriKind.Absolute));
-            view.Image.Source = bitmap;
-            SetModelArea(new Rect(new Size(bitmap.Width, bitmap.Height)));
+            var imagePath = GetImagePath();
+            if (System.IO.File.Exists(imagePath)) {
+                var bitmap = new BitmapImage(new Uri(imagePath, UriKind.Absolute));
+                view.Image.Source = bitmap;
+                SetModelArea(new Rect(new Size(bitmap.Width, bitmap.Height)));
+            } else {
+                // 背景画像が無くても起動できるよう、Model の既定の領域を使う
+                SetModelArea(mvc.Model.Area);
+            }
         }
 
         static string GetImagePath()
