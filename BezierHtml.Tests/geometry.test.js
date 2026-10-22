@@ -7,7 +7,7 @@ const { describe, test } = require("node:test");
 const assert = require("node:assert/strict");
 const BezierAssert = require("./bezier-assert.js");
 
-const versions = ["BezierCanvas"];
+const versions = ["BezierCanvas", "BezierSvg"];
 
 function loadGeometry(version) {
     return require(`../${version}/geometry.js`).Geometry;
@@ -118,3 +118,16 @@ for (const version of versions) {
         });
     });
 }
+
+test("BezierCanvas と BezierSvg の geometry.js は同じ結果になる", () => {
+    // 2 つの版は同じ内容を共通化せずに別々に持っているので、内容がずれていないことを確かめる
+    const [canvasGeometry, svgGeometry] = versions.map(loadGeometry);
+    const points = BezierAssert.samplePoints(25);
+    for (const name of ["toSplineBezier", "toClosedSplineBezier", "toBezierPolyline", "toBezierPolygon"]) {
+        const expected = canvasGeometry[name](points);
+        const actual   = svgGeometry[name](points);
+        assert.equal(actual.length, expected.length);
+        for (let index = 0; index < actual.length; index++)
+            BezierAssert.equal(expected[index], actual[index]);
+    }
+});

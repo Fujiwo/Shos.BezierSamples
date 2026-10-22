@@ -1,0 +1,32 @@
+﻿<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>BezierSvg</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- 描画モードの切り替え (BezierWpf の「図形」メニューに当たる)。起動直後はどれも選ばれていない (Edit モード) -->
+    <div class="toolbar" role="toolbar" aria-label="図形">
+        <button type="button" data-command="line"      aria-pressed="false">線分</button>
+        <button type="button" data-command="rectangle" aria-pressed="false">矩形</button>
+        <button type="button" data-command="bezier"    aria-pressed="false">曲線</button>
+    </div>
+    <!-- 描画領域。SVG (保持モード) で、図形を子要素として追加し、属性を書き換えて形を変える。
+         viewBox を付けないので、SVG の座標は描画領域の左上を原点とする CSS ピクセルになる -->
+    <div class="drawing-area-container">
+        <svg id="drawing-area" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+
+    <!-- ES Modules は file:// では読み込めないので、classic script を依存の順に読み込む -->
+    <script src="geometry.js"></script>
+    <script src="graphic-helper.js"></script>
+    <script src="mouse-event-converter.js"></script>
+    <script src="model.js"></script>
+    <script src="command.js"></script>
+    <script src="controller.js"></script>
+    <script src="view.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>

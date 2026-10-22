@@ -7,7 +7,7 @@ const { describe, test } = require("node:test");
 const assert = require("node:assert/strict");
 const { loadScripts, recordInputEvents, FakeElement, pointerEvent } = require("./fakes.js");
 
-const versions = ["BezierCanvas"];
+const versions = ["BezierCanvas", "BezierSvg"];
 
 for (const version of versions) {
     describe(`${version}/mouse-event-converter.js`, () => {
