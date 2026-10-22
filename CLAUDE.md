@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 概要
 
-「すべての通過点を通る曲線を作る」同じアルゴリズムを Win32 (C++) / WinForms / WPF で書き分けた教材用サンプル集。曲線は自然3次スプライン: 各通過点の接線 m を三重対角の連立方程式 `m[i−1] + 4m[i] + m[i+1] = 3(P[i+1] − P[i−1])` (両端は自然スプラインの条件) をトーマス法で解いて求め、区間ごとに 3 次ベジエ `P[i], P[i] + m[i]/3, P[i+1] − m[i+1]/3, P[i+1]` で描く (`ToSplineTangents` / `ToSplineBezier`、閉じた曲線は Sherman-Morrison で `ToClosedSplineBezier`)。各プロジェクトには Catmull-Rom 版 (`ToBezierPolyline` / `ToBezierPolygon`、制御点 `P[i+1] ± (P[i+2] − P[i]) / 6`) の関数もあり、README では「以前の方法」ではなく、3 次スプラインと並ぶ関数として説明する (サンプルアプリはすべて 3 次スプラインで描く)。3 次スプラインに切り替えた経緯は `Plans/2026-10-22-cubic-spline.md`。
+「すべての通過点を通る曲線を作る」同じアルゴリズムを Win32 (C++) / WinForms / WPF / HTML+JavaScript (Canvas 版・SVG 版) で書き分けた教材用サンプル集。曲線は自然3次スプライン: 各通過点の接線 m を三重対角の連立方程式 `m[i−1] + 4m[i] + m[i+1] = 3(P[i+1] − P[i−1])` (両端は自然スプラインの条件) をトーマス法で解いて求め、区間ごとに 3 次ベジエ `P[i], P[i] + m[i]/3, P[i+1] − m[i+1]/3, P[i+1]` で描く (`ToSplineTangents` / `ToSplineBezier`、閉じた曲線は Sherman-Morrison で `ToClosedSplineBezier`)。各プロジェクトには Catmull-Rom 版 (`ToBezierPolyline` / `ToBezierPolygon`、制御点 `P[i+1] ± (P[i+2] − P[i]) / 6`) の関数もあり、README では「以前の方法」ではなく、3 次スプラインと並ぶ関数として説明する (サンプルアプリはすべて 3 次スプラインで描く)。3 次スプラインに切り替えた経緯は `Plans/2026-10-22-cubic-spline.md`。HTML/JavaScript 版を追加した計画は `Plans/2026-10-22-html-js.md`。
 
 ## ビルド
 
@@ -20,12 +20,14 @@ dotnet test BezierSamples.Tests/BezierSamples.Tests.csproj
 - WSL の dotnet でも `-p:EnableWindowsTargeting=true` を付ければ .NET 10 版はビルドできる (リポジトリ内の obj/ を汚さないよう `-p:IntermediateOutputPath=<一時ディレクトリ>/` も付ける)。ただしテストと WPF / WinForms アプリの実行、.NET Framework 版と C++ のビルドはできない。
 - この環境では WSL から Windows 側のツールを呼べる: `C:\Program Files\dotnet\dotnet.exe` (テスト実行)、Visual Studio 2026 の `VsDevCmd.bat` / `vcvars64.bat` 経由の MSBuild・cl (全体ビルド・C++)。リポジトリの Windows パスは `C:\dropboxfolder\dropbox\source\github\repos\Shos.BezierSamples.2013.2.19`。
 - アプリを実際に操作しての確認はできないので、その旨を明記する。
+- HTML/JavaScript 版 (`BezierCanvas` / `BezierSvg`) はビルド不要で、`index.html` を `file://` で直接開く。.sln には含めない。テストは Node 22 以上で `node --test "BezierHtml.Tests/*.test.js"` (WSL の node で実行できる。glob は引用符で囲む)。ブラウザの操作による確認はこの環境ではできない。
 
 ## アーキテクチャ
 
 - **BezierWinForm**: `Model` / `Controller` / `View` をデザイナーで配置する `Component` として実装した MVC。`Controller` はドラッグ中の `BezierLine` を保持し、`Update` イベントで `View` に再描画を要求する (`View` は `DoubleBuffered` で、確定済みの図形とドラッグ中の曲線をどちらも `OnPaint` で描く)。MouseUp で `Model.Add` → `Model.Update` → `View.Invalidate`。
 - **BezierWpf**: `MouseEventConverter` がマウスイベントをクリック/ドラッグ (`IMouseAcceptor`: `OnClick` / `OnDragStart` / `OnDragging` / `OnDragEnd`) に変換し、`Controller` が現在の `Command` (Edit / 線分 / 矩形 / 曲線など) に委譲する。図形は WPF の `Shape` として `UIElementCollection` に直接追加する。
 - **WpfCad2Lib.Wpf**: BezierWpf の構造を発展させたもの。`MVC` クラスが `View` (XAML UserControl) ・`Model`・`Controller` を結線し、`mvc.Command = new LineCommand()` のように描画モードを切り替える。`AddCommand` が `CreateFigure()` で `Figure` を生成し、`Model.FigureAttribute` を複製して適用する。Undo は `Core/CadUndo.cs`、図形の実装は `Figures/Figures.cs`。
+- **BezierCanvas / BezierSvg**: BezierWpf と同じ構造 (`MouseEventConverter` → `Controller` → `Command`、`AddCommand` の Template Method) を JavaScript のクラスで書いたもの。入力は Pointer Events (主ポインターの左ボタンだけ、`setPointerCapture` / `lostpointercapture` / `pointercancel`)。BezierCanvas は即時モードで、図形を `Model.figures` に持ち、`model.update()` → `view.invalidate()` (`requestAnimationFrame`) で全体を描き直す (内部の画素数を `devicePixelRatio` に合わせ、座標は CSS ピクセル)。BezierSvg は保持モードで、`<svg>` の子要素がそのまま Model になる。どちらも作図中の図形は最初の `onDragging` で 1 度だけ Model に追加する。
 - **WpfCad2Lib.TestApp**: `RoutedCommand` からツールバー操作を `mvc.Command` に割り当て、`Resources/sample.jpg` を背景に表示する。
 
 ## 規約・注意点
@@ -33,4 +35,5 @@ dotnet test BezierSamples.Tests/BezierSamples.Tests.csproj
 - C# 9.0 以降が使えるプロジェクトでは null 比較を `is null` / `is not null` に統一する (`== null` / `!= null` は使わない)。C++ と .NET Framework 版は対象外。.NET 版はすべて `<Nullable>enable</Nullable>`。
 - ソースは UTF-8 (BOM 付き)・CRLF。既存ファイルの編集時はこれを保つ。
 - 曲線の変換 (3次スプライン・Catmull-Rom)・`MouseEventConverter` などのプロジェクト間コード重複、および .NET / .NET Framework の二重実装は教材として意図的なもの。共通化を提案・実施しない。
+- JavaScript (HTML/JavaScript 版) は ES2020 の範囲で書く (クラスフィールド・`#private`・`Array.prototype.at`・`Object.hasOwn` などは使わず、初期化はコンストラクターで行う)。ES Modules・ビルドツール・npm パッケージ・フレームワークは使わない。classic script で、各ファイルの末尾の `if (typeof module === "object" && module.exports) module.exports = { … };` で Node のテストに公開する。ほかのファイルの名前はトップレベルの宣言を呼び出し時に参照する (同じ名前のトップレベル宣言を 2 つのファイルに書かない)。新しいファイルも UTF-8 (BOM 付き)・CRLF。2 つの HTML 版の間のコード重複 (`geometry.js` など) も意図的なもので、共通化しない。
 - `Reviews/` にリポジトリレビュー結果 (既知のバグ一覧。例: `CadUndo.Undo/Redo` の遅延列挙の二重評価) がある。関連箇所を触る前に参照する。

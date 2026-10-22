@@ -2,7 +2,7 @@
 
 マウスで指定した**すべての通過点を滑らかに通る曲線 (3 次スプライン曲線)** を、3 次ベジエ曲線の列として描くサンプル集です。
 各プロジェクトには、通過点の列をベジエ曲線に変換する関数として、**3 次スプライン曲線**と **Catmull-Rom スプライン**の 2 種類があります。サンプルアプリケーションは、どれも 3 次スプライン曲線で描きます。
-同じアルゴリズムを Win32 (C++)・Windows Forms・WPF で書き分けているので、API ごとの違いを見比べられます。
+同じアルゴリズムを Win32 (C++)・Windows Forms・WPF・HTML/JavaScript (Canvas と SVG) で書き分けているので、API ごとの違いを見比べられます。
 WPF 版を発展させた簡易 CAD ライブラリ **WpfCad2Lib** も含まれています。
 
 > 教材として、プロジェクトごとに独立して読めるようにしています。そのため、曲線の変換のコードや .NET / .NET Framework 版の実装は、意図的にプロジェクトごとに重複させています。
@@ -13,6 +13,7 @@ WPF 版を発展させた簡易 CAD ライブラリ **WpfCad2Lib** も含まれ�
   - [目次](#目次)
   - [プロジェクト構成](#プロジェクト構成)
   - [動作環境とビルド](#動作環境とビルド)
+    - [HTML/JavaScript 版の実行とテスト](#htmljavascript-版の実行とテスト)
   - [サンプルの操作方法](#サンプルの操作方法)
   - [通過点を通る曲線を作るしくみ](#通過点を通る曲線を作るしくみ)
     - [1 区間の制御点](#1-区間の制御点)
@@ -22,6 +23,11 @@ WPF 版を発展させた簡易 CAD ライブラリ **WpfCad2Lib** も含まれ�
     - [点の間引きとドラッグ中の描画](#点の間引きとドラッグ中の描画)
     - [Catmull-Rom スプラインとの比較](#catmull-rom-スプラインとの比較)
     - [プロジェクトごとの関数](#プロジェクトごとの関数)
+  - [HTML/JavaScript 版](#htmljavascript-版)
+    - [即時モード (Canvas) と保持モード (SVG)](#即時モード-canvas-と保持モード-svg)
+    - [入力 (Pointer Events)](#入力-pointer-events)
+    - [座標・高 DPI・リサイズ](#座標高-dpiリサイズ)
+    - [スクリプトの構成とテスト](#スクリプトの構成とテスト)
   - [WpfCad2Lib の使い方](#wpfcad2lib-の使い方)
   - [WpfCad2Lib のクラス図](#wpfcad2lib-のクラス図)
     - [MVC の構成](#mvc-の構成)
@@ -45,6 +51,11 @@ WPF 版を発展させた簡易 CAD ライブラリ **WpfCad2Lib** も含まれ�
 | `WpfCad2Lib.Wpf` | C# / WPF クラスライブラリ | `net10.0-windows10.0.26100.0` | 簡易 CAD ライブラリ。図形・選択・ズーム / パン・袋文字 |
 | `WpfCad2Lib.TestApp` | C# / WPF アプリ | `net10.0-windows10.0.26100.0` | WpfCad2Lib の動作確認アプリ |
 | `BezierSamples.Tests` | C# / xUnit | `net10.0-windows10.0.26100.0` | 曲線の変換の単体テスト (WpfCad2Lib・BezierWpf・BezierWinForm) |
+| `BezierCanvas` | HTML / JavaScript | ブラウザ (ES2020) | `BezierWpf` と同じ機能を Canvas 2D (即時モード) で描く |
+| `BezierSvg` | HTML / JavaScript | ブラウザ (ES2020) | `BezierWpf` と同じ機能を SVG (保持モード) で描く |
+| `BezierHtml.Tests` | JavaScript / `node:test` | Node 22 以上 | HTML/JavaScript 版の単体テスト (曲線の変換・入力・コマンド・描画) |
+
+HTML/JavaScript 版の 3 つは .sln に含めていません (ビルドの対象が無いため)。
 
 ```text
 Shos.BezierSamples.sln
@@ -61,6 +72,9 @@ Shos.BezierSamples.sln
 │   └─ Utility/                  … 曲線の変換・幾何計算・袋文字など
 ├─ WpfCad2Lib.TestApp/           … 動作確認アプリ
 ├─ BezierSamples.Tests/          … 単体テスト
+├─ BezierCanvas/                 … HTML + Canvas (.sln には含まない)
+├─ BezierSvg/                    … HTML + SVG (.sln には含まない)
+├─ BezierHtml.Tests/             … HTML/JavaScript 版の単体テスト (.sln には含まない)
 ├─ docs/images/                  … README の図
 ├─ Plans/                        … 変更の計画書
 └─ Reviews/                      … リポジトリのレビュー結果
@@ -68,7 +82,7 @@ Shos.BezierSamples.sln
 
 ## 動作環境とビルド
 
-すべてのプロジェクトが Windows 専用です。
+C++ と .NET のプロジェクトは Windows 専用です。HTML/JavaScript 版は、[下記](#htmljavascript-版の実行とテスト)のとおりブラウザだけで動きます。
 
 - Windows 10 / 11
 - Visual Studio 2026 (PlatformToolset v145)
@@ -93,6 +107,17 @@ dotnet run --project WpfCad2Lib.TestApp/WpfCad2Lib.TestApp.csproj
 dotnet test BezierSamples.Tests/BezierSamples.Tests.csproj
 ```
 
+### HTML/JavaScript 版の実行とテスト
+
+- **実行:** ビルドは不要です。`BezierCanvas/index.html` または `BezierSvg/index.html` をブラウザで直接開きます (`file://` のままで動きます。ローカル サーバーは要りません)。最新の Microsoft Edge / Google Chrome / Mozilla Firefox を想定しています。
+- **テスト:** Node 22 以上で、リポジトリのルートから次を実行します。npm パッケージは使いません。Node はテストのためだけに使い、ブラウザでの実行には要りません。
+
+```text
+node --test "BezierHtml.Tests/*.test.js"
+```
+
+glob は引用符で囲み、シェルではなく Node に展開させます (PowerShell・bash 共通)。
+
 ## サンプルの操作方法
 
 | サンプル | 操作 |
@@ -100,6 +125,7 @@ dotnet test BezierSamples.Tests/BezierSamples.Tests.csproj
 | `BezierWin32` | 左クリックで通過点を追加します。右クリックで全消去します。 |
 | `BezierWinForm` | 左ボタンでドラッグすると、その軌跡を通る曲線になります。 |
 | `BezierWpf` | 「図形」メニューで線分・矩形・曲線を選んでからドラッグします。 |
+| `BezierCanvas` / `BezierSvg` | ツールバーで線分・矩形・曲線を選んでからドラッグします (選んでいるボタンが強調されます)。起動直後はどれも選ばれておらず、ドラッグしても何も描きません。タッチ・ペンでも描けます。 |
 | `WpfCad2Lib.TestApp` | 下の表を参照してください。 |
 
 `WpfCad2Lib.TestApp` の操作は次のとおりです。
@@ -117,7 +143,7 @@ dotnet test BezierSamples.Tests/BezierSamples.Tests.csproj
 ## 通過点を通る曲線を作るしくみ
 
 各プロジェクトには、3 次スプライン曲線と Catmull-Rom スプラインの変換関数があります。
-サンプルアプリケーション (Win32 版・WinForms 版・WPF 版・WpfCad2Lib) は、どれも通過点の列から**自然 3 次スプライン曲線** (すべての点を通り、つなぎ目で曲率まで連続する曲線) を求め、3 次ベジエ曲線の列として描きます。
+サンプルアプリケーション (Win32 版・WinForms 版・WPF 版・WpfCad2Lib・HTML/JavaScript 版) は、どれも通過点の列から**自然 3 次スプライン曲線** (すべての点を通り、つなぎ目で曲率まで連続する曲線) を求め、3 次ベジエ曲線の列として描きます。
 この章では、まず 3 次スプライン曲線を説明し、最後に [Catmull-Rom スプラインとの比較](#catmull-rom-スプラインとの比較) で 2 つの違いを説明します。
 
 ### 1 区間の制御点
@@ -218,7 +244,7 @@ n 個の通過点 P0〜P(n−1) から、最初と最後の区間も含めて n 
 
 ### 点の間引きとドラッグ中の描画
 
-- **点の間引き:** ドラッグで点を集めるサンプルでは、マウスの細かい揺れで曲線が波打たないよう、直前の点から一定距離以上動いたときだけ点を追加します。距離は `BezierWinForm` が 10、`BezierWpf` が 16、WpfCad2Lib の `CurveFigure` が 8 です。ドラッグを終えた位置は、距離にかかわらず必ず曲線の終点になります。
+- **点の間引き:** ドラッグで点を集めるサンプルでは、マウスの細かい揺れで曲線が波打たないよう、直前の点から一定距離以上動いたときだけ点を追加します。距離は `BezierWinForm` が 10、`BezierWpf` と HTML/JavaScript 版が 16 (HTML/JavaScript 版は CSS ピクセル)、WpfCad2Lib の `CurveFigure` が 8 です。ドラッグを終えた位置は、距離にかかわらず必ず曲線の終点になります。
 - **ドラッグ中の描画 (`CurveFigure`):**
   - 3 次スプラインでは、点を 1 つ足すと全区間の接線が少しずつ変わります。ドラッグ中に毎回全体を作り直すと、長い曲線では全体で O(n²) の計算になります。
   - ただし、1 点の変化の影響は 1 区間離れるごとに約 0.27 倍 (2 − √3) に減ります。
@@ -262,6 +288,8 @@ n 個の通過点 P0〜P(n−1) から、最初と最後の区間も含めて n 
 | `BezierWinForm` | `GeometryExtensions.ToSplineTangents` / `ToSplineBezier` / `ToClosedSplineBezier` | `GeometryExtensions.ToBezierPolyline` / `ToBezierPolygon`、`Geometry.ToBezier` | `Graphics.DrawBeziers` (2 点のときは `Graphics.DrawLine`) |
 | `BezierWpf` | `GeometryExtensions.ToSplineTangents` / `ToSplineBezier` / `ToClosedSplineBezier` | `GeometryExtensions.ToBezierPolyline` / `ToBezierPolygon`、`Geo.ToBezier` | `PathGeometry` + `BezierSegment` |
 | `WpfCad2Lib.Wpf` | `GeoExtensions.ToSplineTangents` / `ToSplineBezier` / `ToClosedSplineBezier` | `GeoExtensions.ToBezierPolyline` / `ToBezierPolygon`、`Geo.ToBezier` | `GeoHelper.BezierPathGeometry` (`PathGeometry`)、`CurveFigure` (差分更新) |
+| `BezierCanvas` | `Geometry.toSplineTangents` / `toSplineBezier` / `toClosedSplineBezier` | `Geometry.toBezierPolyline` / `toBezierPolygon` / `toBezier` | `GraphicHelper.addBezierPath` (`moveTo` + `bezierCurveTo`) |
+| `BezierSvg` | `Geometry.toSplineTangents` / `toSplineBezier` / `toClosedSplineBezier` | `Geometry.toBezierPolyline` / `toBezierPolygon` / `toBezier` | `GraphicHelper.toPathData` (`<path>` の `d` 属性 `M … C …`) |
 
 - **閉じた曲線:** `BezierWin32` には、閉じた曲線の関数 (3 次スプラインの `ToClosedSplineBezier`、Catmull-Rom の `ToBezierPolygon`) はありません。
 
@@ -271,6 +299,75 @@ n 個の通過点 P0〜P(n−1) から、最初と最後の区間も含めて n 
   - つなぎ目で 1 階微分と 2 階微分が一致すること
   - 両端で 2 階微分が 0 になること
   - 実装どうしで同じ制御点になること
+- **HTML/JavaScript 版の単体テスト:** `BezierHtml.Tests` は、2 つの版の `geometry.js` について、上と同じ入力・許容誤差 (距離 1e-9) で同じ性質を確かめます。閉じた曲線と Catmull-Rom 版の関数、0 点・1 点の戻り値、2 つの版の結果の一致も確かめます。
+
+## HTML/JavaScript 版
+
+`BezierCanvas` と `BezierSvg` は、`BezierWpf` (.NET 10 版) と同じ機能・同じ構造をブラウザで動く JavaScript で書いたものです。
+`MouseEventConverter` (クリック/ドラッグへの変換) → `Controller` → `Command` (`EditCommand` / `LineCommand` / `RectangleCommand` / `BezierCommand`、`AddCommand` の Template Method) という MVC + Command パターンも、クラス名・メソッド名 (JavaScript の慣習に合わせて camelCase) もそろえています。
+2 つの版の違いは**描画の方式だけ**です。
+
+### 即時モード (Canvas) と保持モード (SVG)
+
+![BezierCanvas (即時モード) と BezierSvg (保持モード) の、ドラッグから表示までの流れの比較](docs/images/canvas-vs-svg.svg)
+
+| | BezierCanvas (即時モード) | BezierSvg (保持モード) |
+|---|---|---|
+| 図形を持つもの | アプリの Model (`model.figures`。普通のオブジェクトの配列) | DOM (`<svg>` の子要素)。DOM がそのまま Model になる (WPF の `UIElementCollection` と同じ) |
+| 図形を描く処理 | 図形ごとの `draw(context)` をアプリが書く | ブラウザが描く。アプリは要素と属性を作るだけ |
+| 形を変えたとき | データを書き換え、`model.update()` → `view.invalidate()` → 次のフレームで全体を消して描き直す | 属性を書き換えるだけ。描き直しはブラウザが行う |
+| 作図中の図形 | 最初の `onDragging` で Model に追加し、毎回の再描画で確定済みの図形と一緒に描く | 最初の `onDragging` で `<svg>` に追加し、属性を書き換える |
+| 高 DPI | 内部の画素数を `devicePixelRatio` に合わせ、`setTransform` で CSS ピクセルに合わせる | ベクターなので不要 |
+| リサイズ | 内部の画素数を変えると内容が消えるので、Model から描き直す | 何もしなくてよい |
+| 曲線の形式 | `moveTo` + `bezierCurveTo` の呼び出し | `d` 属性の文字列 `M … C …` |
+| 向いている用途 | 図形が非常に多い描画や、毎フレーム全体が変わる描画 | 図形ごとの選択・イベント・スタイルの変更 (DevTools で要素を確かめられる) |
+| 近い版 | WinForms 版 (`OnPaint`) | WPF 版 (`Shape` を `Canvas` に追加) |
+
+- どちらの版も、作図中の図形を Model に追加するのは最初の `onDragging` の 1 か所だけなので、確定時に二重に登録されることはありません。
+- 通過点が 2 個以下で確定した曲線は、WPF 版と同じく Model (DOM) に残りますが、何も表示しません。
+- **線の見え方:** WPF の `Rectangle` は線を図形の内側に描きます (幅・高さの中に線が収まる)。Canvas 2D の `rect` と SVG の `<rect>` は線を輪郭の中心に描くので、線の太さ 3 の半分 (1.5 CSS ピクセル) だけ外にはみ出します。HTML 版は標準の描き方のままにしています。
+
+### 入力 (Pointer Events)
+
+入力には Pointer Events を使い、`MouseEventConverter` で WPF 版と同じクリック/ドラッグに変換します。
+
+| WPF 版 | HTML/JavaScript 版 |
+|---|---|
+| `CaptureMouse()` / `ReleaseMouseCapture()` | `setPointerCapture()` / `releasePointerCapture()` |
+| `LostMouseCapture` | `lostpointercapture`、`pointercancel` |
+| `MouseLeftButtonDown` / `MouseLeftButtonUp` | `pointerdown` / `pointerup` (`button` が 0) |
+| `MouseMove` で `e.LeftButton == MouseButtonState.Pressed` を確かめる | `pointermove` で `buttons & 1` を確かめる |
+
+- ドラッグの判定 (押下位置から 10 CSS ピクセル以上) と、判定前の移動位置をためて `dragStart` → `dragging` の順に通知する処理は、WPF 版と同じです。状態遷移の本体 (`onButtonDown` / `onMove` / `onButtonUp` / `onLostCapture`) は DOM に依存しません。
+- 対象は**主ポインター** (`isPrimary`: マウス・ペン・最初に触れた指) の左ボタンだけです。操作中は、ほかのポインター (2 本目の指など) を無視します。
+- ほかのボタンを押したまま左ボタンを押す・離すと、`pointerdown` / `pointerup` ではなく `pointermove` として届きます (コード化されたボタン操作)。そのため、`button` と `buttons` で左ボタンの変化を判定します。
+- ブラウザの外で離して `pointerup` を取りこぼした場合も、次に届いた `pointermove` で左ボタンが離れていれば、その位置でドラッグを終えます。
+
+### 座標・高 DPI・リサイズ
+
+- 座標・距離のしきい値 (10 / 16)・線の太さ (3) は、すべて描画領域の左上を原点とする **CSS ピクセル**で扱います。ポインターの位置は `clientX - getBoundingClientRect().left` などで求めます。
+- **BezierCanvas:** `<canvas>` の表示サイズは CSS で決め、内部の画素数を「表示サイズ × `devicePixelRatio`」にします。描くたびに `setTransform` で CSS ピクセルを内部の画素に合わせるので、高 DPI でもぼやけず、座標や線の太さは変わりません。表示サイズの変化は `ResizeObserver` で、`devicePixelRatio` だけの変化 (表示倍率の違うモニターへの移動など) は `matchMedia` で知り、Model から描き直します。
+- **BezierSvg:** `<svg>` に `viewBox` を付けないので、SVG の座標は CSS ピクセルと一致し、ポインターの位置をそのまま属性に使えます。高 DPI・リサイズのための処理はありません。
+- どちらの版も、描画領域を小さくしても図形の座標は変えません。はみ出した部分は見えなくなり、元の大きさに戻すと再び表示されます (WPF の `Canvas` と同じ)。
+
+### スクリプトの構成とテスト
+
+| ファイル | 内容 | BezierWpf |
+|---|---|---|
+| `index.html` / `style.css` | ツールバーと描画領域 | `MainWindow.xaml` / `View.xaml` |
+| `geometry.js` | 曲線の計算。DOM・Canvas・SVG に依存しない | `Geometry.cs` (`Geo` / `GeometryExtensions`) |
+| `graphic-helper.js` | 点列 → `bezierCurveTo` / `d` 属性 | `Geometry.cs` (`GraphicHelper`) |
+| `mouse-event-converter.js` | Pointer Events → クリック/ドラッグ | `MouseEventConverter.cs` / `IMouseAcceptor.cs` |
+| `model.js` | Canvas 版: 図形の配列と変更の通知。SVG 版: `<svg>` 要素を包む | `canvas.Children` |
+| `figures.js` (Canvas 版だけ) | `LineFigure` / `RectangleFigure` / `BezierFigure` (`draw(context)` を持つ) | `Line` / `Rectangle` / `Path` |
+| `command.js` / `controller.js` | Command と Controller | `Command.cs` / `Controller.cs` |
+| `view.js` | Canvas 版: 高 DPI・リサイズ・再描画。SVG 版: 入力の結線だけ | `View.xaml.cs` |
+| `main.js` | 結線とツールバー。トップレベルの `model` / `controller` は DevTools のコンソールから参照できる | `MainWindow.xaml.cs` |
+
+- `index.html` を `file://` で直接開けるよう、ES Modules ではなく classic script (`<script src>`) を依存の順に読み込みます。ビルドツール・npm パッケージ・フレームワークは使いません (ES2020 の範囲で書いています)。
+- 同じファイルを Node のテストからも読み込めるよう、各ファイルの末尾で、Node から読み込まれたときだけ `module.exports` で公開します。
+- 2 つの版の `geometry.js` などは同じ内容ですが、ほかのプロジェクトと同じく、各フォルダーだけで読めるよう共通化していません (内容のずれはテストで検出します)。
+- `BezierHtml.Tests` は、計算のほかに、入力の状態遷移 (ドラッグ開始の距離、キャプチャーの喪失、Pointer Events の振り分け)、コマンド (点の間引き、確定時の置換・追加、二重登録の防止)、Canvas 版の再描画 (偽の Canvas のコンテキストへの描画命令、リサイズと `devicePixelRatio` の変化)、`index.html` のスクリプトの読み込みを確かめます。実際のブラウザでの表示や操作は、テストの対象外です。
 
 ## WpfCad2Lib の使い方
 

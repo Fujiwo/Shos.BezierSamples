@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="580" viewBox="0 0 760 580" font-family="'Segoe UI','Yu Gothic UI','Hiragino Sans','Noto Sans JP',sans-serif" role="img" aria-label="BezierCanvas (即時モード) と BezierSvg (保持モード) の、ドラッグから表示までの流れの比較">
+  <title>BezierCanvas (即時モード) と BezierSvg (保持モード) の、ドラッグから表示までの流れの比較</title>
+  <defs>
+    <marker id="arrow-gray" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#57606a"/></marker>
+    <marker id="arrow-orange" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#c26a00"/></marker>
+    <marker id="arrow-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#2a9d55"/></marker>
+  </defs>
+  <rect x="0" y="0" width="760" height="580" rx="12" fill="#ffffff" stroke="#d0d7de"/>
+  <text x="24" y="34" font-size="18" font-weight="700" fill="#24292f">ドラッグから表示までの流れ: 即時モード (Canvas) と保持モード (SVG)</text>
+
+  <!-- 共通の流れ -->
+  <g font-size="14" text-anchor="middle">
+    <rect x="24" y="56" width="154" height="50" rx="6" fill="#f6f8fa" stroke="#1f6feb" stroke-width="1.5"/>
+    <text x="101" y="77" font-weight="700" fill="#1f6feb">Pointer Events</text>
+    <text x="101" y="96" font-size="12" fill="#57606a">pointerdown など</text>
+    <rect x="208" y="56" width="154" height="50" rx="6" fill="#f6f8fa" stroke="#1f6feb" stroke-width="1.5"/>
+    <text x="285" y="77" font-weight="700" fill="#1f6feb">MouseEventConverter</text>
+    <text x="285" y="96" font-size="12" fill="#57606a">クリック・ドラッグに変換</text>
+    <rect x="392" y="56" width="154" height="50" rx="6" fill="#f6f8fa" stroke="#1f6feb" stroke-width="1.5"/>
+    <text x="469" y="77" font-weight="700" fill="#1f6feb">Controller</text>
+    <text x="469" y="96" font-size="12" fill="#57606a">現在の Command に委譲</text>
+    <rect x="576" y="56" width="154" height="50" rx="6" fill="#f6f8fa" stroke="#1f6feb" stroke-width="1.5"/>
+    <text x="653" y="77" font-weight="700" fill="#1f6feb">AddCommand</text>
+    <text x="653" y="96" font-size="12" fill="#57606a">Template Method</text>
+  </g>
+  <g stroke="#57606a" stroke-width="1.5" fill="none" marker-end="url(#arrow-gray)">
+    <line x1="178" y1="81" x2="206" y2="81"/>
+    <line x1="362" y1="81" x2="390" y2="81"/>
+    <line x1="546" y1="81" x2="574" y2="81"/>
+  </g>
+  <path d="M653,106 V128 H200 V148" fill="none" stroke="#c26a00" stroke-width="1.5" marker-end="url(#arrow-orange)"/>
+  <path d="M560,128 V148" fill="none" stroke="#2a9d55" stroke-width="1.5" marker-end="url(#arrow-green)"/>
+  <text x="380" y="122" font-size="12" fill="#57606a" text-anchor="middle">onDragStart / onDragging / onDragEnd</text>
+
+  <!-- BezierCanvas (即時モード) -->
+  <rect x="24" y="150" width="352" height="410" rx="10" fill="#fff8f0" stroke="#c26a00" stroke-width="1.5"/>
+  <text x="200" y="176" font-size="16" font-weight="700" fill="#c26a00" text-anchor="middle">BezierCanvas (即時モード)</text>
+  <g font-size="14" text-anchor="middle">
+    <rect x="44" y="192" width="312" height="50" rx="6" fill="#ffffff" stroke="#c26a00"/>
+    <text x="200" y="213" font-weight="700" fill="#24292f">図形のデータを書き換える</text>
+    <text x="200" y="232" font-size="12" fill="#57606a">最初の 1 回だけ model.add(figure)</text>
+    <rect x="44" y="262" width="312" height="50" rx="6" fill="#ffffff" stroke="#c26a00"/>
+    <text x="200" y="283" font-weight="700" fill="#24292f">model.update()</text>
+    <text x="200" y="302" font-size="12" fill="#57606a">→ view.invalidate() で再描画を予約</text>
+    <rect x="44" y="332" width="312" height="50" rx="6" fill="#ffffff" stroke="#c26a00"/>
+    <text x="200" y="353" font-weight="700" fill="#24292f">requestAnimationFrame</text>
+    <text x="200" y="372" font-size="12" fill="#57606a">1 フレームに 1 回だけ render()</text>
+    <rect x="44" y="402" width="312" height="50" rx="6" fill="#ffffff" stroke="#c26a00"/>
+    <text x="200" y="423" font-weight="700" fill="#24292f">全体を消して、全図形を draw(context)</text>
+    <text x="200" y="442" font-size="12" fill="#57606a">moveTo + bezierCurveTo (作図中の図形も描く)</text>
+  </g>
+  <g stroke="#c26a00" stroke-width="1.5" fill="none" marker-end="url(#arrow-orange)">
+    <line x1="200" y1="242" x2="200" y2="260"/>
+    <line x1="200" y1="312" x2="200" y2="330"/>
+    <line x1="200" y1="382" x2="200" y2="400"/>
+  </g>
+  <rect x="44" y="472" width="312" height="72" rx="6" fill="#f6f8fa" stroke="#d0d7de"/>
+  <text x="200" y="496" font-size="13" font-weight="700" fill="#24292f" text-anchor="middle">図形を覚えるのはアプリ (Model.figures)</text>
+  <text x="200" y="516" font-size="12" fill="#57606a" text-anchor="middle">リサイズ・高 DPI: 内部の画素数を変えると内容が</text>
+  <text x="200" y="533" font-size="12" fill="#57606a" text-anchor="middle">消えるので、Model から描き直す</text>
+
+  <!-- BezierSvg (保持モード) -->
+  <rect x="384" y="150" width="352" height="410" rx="10" fill="#f2fbf5" stroke="#2a9d55" stroke-width="1.5"/>
+  <text x="560" y="176" font-size="16" font-weight="700" fill="#2a9d55" text-anchor="middle">BezierSvg (保持モード)</text>
+  <g font-size="14" text-anchor="middle">
+    <rect x="404" y="192" width="312" height="50" rx="6" fill="#ffffff" stroke="#2a9d55"/>
+    <text x="560" y="213" font-weight="700" fill="#24292f">要素を作る (最初の 1 回だけ)</text>
+    <text x="560" y="232" font-size="12" fill="#57606a">createElementNS → model.add (appendChild)</text>
+    <rect x="404" y="262" width="312" height="50" rx="6" fill="#ffffff" stroke="#2a9d55"/>
+    <text x="560" y="283" font-weight="700" fill="#24292f">属性を書き換える</text>
+    <text x="560" y="302" font-size="12" fill="#57606a">setAttribute("d", "M … C …") など</text>
+    <rect x="404" y="332" width="312" height="50" rx="6" fill="#ffffff" stroke="#2a9d55"/>
+    <text x="560" y="353" font-weight="700" fill="#24292f">&lt;svg&gt; の子要素 = Model</text>
+    <text x="560" y="372" font-size="12" fill="#57606a">DOM がそのまま図形を覚えている</text>
+    <rect x="404" y="402" width="312" height="50" rx="6" fill="#ffffff" stroke="#2a9d55"/>
+    <text x="560" y="423" font-weight="700" fill="#24292f">ブラウザが描き直す</text>
+    <text x="560" y="442" font-size="12" fill="#57606a">アプリは描画の処理を持たない</text>
+  </g>
+  <g stroke="#2a9d55" stroke-width="1.5" fill="none" marker-end="url(#arrow-green)">
+    <line x1="560" y1="242" x2="560" y2="260"/>
+    <line x1="560" y1="312" x2="560" y2="330"/>
+    <line x1="560" y1="382" x2="560" y2="400"/>
+  </g>
+  <rect x="404" y="472" width="312" height="72" rx="6" fill="#f6f8fa" stroke="#d0d7de"/>
+  <text x="560" y="496" font-size="13" font-weight="700" fill="#24292f" text-anchor="middle">図形を覚えるのはブラウザ (DOM)</text>
+  <text x="560" y="516" font-size="12" fill="#57606a" text-anchor="middle">リサイズ・高 DPI: 何もしなくてよい</text>
+  <text x="560" y="533" font-size="12" fill="#57606a" text-anchor="middle">(ベクターなので、ブラウザが描き直す)</text>
+</svg>
