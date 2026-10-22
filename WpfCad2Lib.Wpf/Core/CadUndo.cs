@@ -27,21 +27,24 @@ class CadUndo
         public bool     IsStart      { get;         set; }
         public Figure?  OlderFigure  { get; private set; }
         public Figure?  NewerFigure  { get; private set; }
+        // 削除直前の位置。グループを逆順に戻すことで、その時点の並びも復元される。
+        public int      RemovedIndex { get; private set; }
 
-        UndoData(UndoType type, Figure? olderFigure, Figure? newerFigure)
+        UndoData(UndoType type, Figure? olderFigure, Figure? newerFigure, int removedIndex = -1)
         {
             //if (olderFigure is not null)
             //    olderFigure.IsSelected = false;
-            Type        = type;
-            OlderFigure = olderFigure;
-            NewerFigure = newerFigure;
+            Type         = type;
+            OlderFigure  = olderFigure;
+            NewerFigure  = newerFigure;
+            RemovedIndex = removedIndex;
         }
 
         public static UndoData AddData(Figure figure)
             => new(UndoType.Add, null, figure);
 
-        public static UndoData RemoveData(Figure figure)
-            => new(UndoType.Remove, figure, null);
+        public static UndoData RemoveData(Figure figure, int index)
+            => new(UndoType.Remove, figure, null, index);
 
         public static UndoData UpdateData(Figure olderFigure, Figure newerFigure)
             => new(UndoType.Update, olderFigure, newerFigure);
@@ -161,8 +164,11 @@ class CadUndo
 
     public void Remove(IList<Figure> figures, Figure figure)
     {
-        figures.Remove(figure);
-        undoBuffer.Push(UndoData.RemoveData(figure));
+        int index = figures.IndexOf(figure);
+        if (index < 0)
+            return;
+        figures.RemoveAt(index);
+        undoBuffer.Push(UndoData.RemoveData(figure, index));
     }
 
     public bool Update(IList<Figure> figures, Figure olderFigure, Figure newerFigure)
@@ -205,7 +211,7 @@ class CadUndo
                 break;
             case UndoData.UndoType.Remove:
                 if (_undoData.OlderFigure is not null)
-                    figures.Add(_undoData.OlderFigure);
+                    figures.Insert(_undoData.RemovedIndex, _undoData.OlderFigure);
                 break;
             case UndoData.UndoType.Update:
                 if (_undoData.OlderFigure is not null && _undoData.NewerFigure is not null) {

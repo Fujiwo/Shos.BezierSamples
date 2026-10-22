@@ -25,10 +25,16 @@ namespace BezierWinForm
 
             // View のマウス イベントを Controller に渡す。
             // ドラッグの開始と終了は左ボタンだけを対象にする。
-            // MouseMove はボタンを押していなくても発生するが、ドラッグ中かどうかは Controller 側で判定する。
+            // 解放通知を取りこぼした場合も、左ボタンなしの移動で作図を終了する。
             view.MouseDown += (sender, e) => { if (e.Button == MouseButtons.Left) controller.OnMouseDown(e.Location); };
-            view.MouseMove += (sender, e) => controller.OnMouseMove(e.Location);
+            view.MouseMove += (sender, e) => {
+                if ((e.Button & MouseButtons.Left) != 0)
+                    controller.OnMouseMove(e.Location);
+                else
+                    controller.OnMouseCaptureLost();
+            };
             view.MouseUp   += (sender, e) => { if (e.Button == MouseButtons.Left) controller.OnMouseUp  (e.Location); };
+            view.MouseCaptureChanged += (sender, e) => { if (!view.Capture) controller.OnMouseCaptureLost(); };
 
             // 確定した図形の追加 (Model) と、ドラッグ中の曲線の変化 (Controller) を View に通知する。
             model.Update += view.OnUpdateModel;

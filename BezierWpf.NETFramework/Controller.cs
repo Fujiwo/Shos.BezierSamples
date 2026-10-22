@@ -12,6 +12,7 @@ namespace BezierWpf
     public class Controller : IMouseAcceptor
     {
         Command             command = null;
+        Command             dragCommand;
         UIElementCollection model   = null;
 
         /// <summary>
@@ -36,6 +37,7 @@ namespace BezierWpf
         /// <summary>
         /// 現在の描画モード。メニューの選択に応じて <see cref="MainWindow"/> が差し替える。
         /// 新しい Command には、描き込む先として現在の Model を渡す。
+        /// ドラッグ中の変更は次の操作から使い、現在のドラッグは開始時の Command で完了する。
         /// </summary>
         public Command Command
         {
@@ -51,8 +53,6 @@ namespace BezierWpf
             }
         }
 
-        // 以下の 4 つは、どれも現在の Command にそのまま委譲する (Command が未設定なら何もしない)
-
         /// <summary>
         /// クリックを現在の Command に委譲する。
         /// </summary>
@@ -63,30 +63,33 @@ namespace BezierWpf
         }
 
         /// <summary>
-        /// ドラッグの開始を現在の Command に委譲する。
+        /// ドラッグの通知先を固定して開始する。
         /// </summary>
         public void OnDragStart(Point position)
         {
-            if (Command != null)
-                Command.OnDragStart(position);
+            dragCommand = Command;
+            if (dragCommand != null)
+                dragCommand.OnDragStart(position);
         }
 
         /// <summary>
-        /// ドラッグ中の移動を現在の Command に委譲する。
+        /// ドラッグ中の移動を開始時の Command に委譲する。
         /// </summary>
         public void OnDragging(Point position)
         {
-            if (Command != null)
-                Command.OnDragging(position);
+            if (dragCommand != null)
+                dragCommand.OnDragging(position);
         }
 
         /// <summary>
-        /// ドラッグの終了を現在の Command に委譲する。
+        /// 開始時の Command でドラッグを終了し、通知先の参照を解放する。
         /// </summary>
         public void OnDragEnd(Point position)
         {
-            if (Command != null)
-                Command.OnDragEnd(position);
+            var endingCommand = dragCommand;
+            dragCommand = null;
+            if (endingCommand != null)
+                endingCommand.OnDragEnd(position);
         }
     }
 }

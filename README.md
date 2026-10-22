@@ -1,4 +1,4 @@
-# Shos.BezierSamples
+﻿# Shos.BezierSamples
 
 マウスで指定した**すべての通過点を滑らかに通る曲線 (3 次スプライン曲線)** を、3 次ベジエ曲線の列として描くサンプル集です。
 各プロジェクトには、通過点の列をベジエ曲線に変換する関数として、**3 次スプライン曲線**と **Catmull-Rom スプライン**の 2 種類があります。サンプルアプリケーションは、どれも 3 次スプライン曲線で描きます。
@@ -35,6 +35,7 @@ WPF 版を発展させた簡易 CAD ライブラリ **WpfCad2Lib** も含まれ�
     - [図形](#図形)
     - [ユーティリティ (幾何計算・ベジエ変換)](#ユーティリティ-幾何計算ベジエ変換)
     - [ユーティリティ (描画・共通)](#ユーティリティ-描画共通)
+  - [.NET 版の入力・表示・履歴の仕様](#net-版の入力表示履歴の仕様)
   - [既知の制限](#既知の制限)
   - [ライセンス](#ライセンス)
 
@@ -50,7 +51,7 @@ WPF 版を発展させた簡易 CAD ライブラリ **WpfCad2Lib** も含まれ�
 | `WpfCad2Lib.Core` | C# クラスライブラリ | `net10.0` | UI に依存しない共通部品 (`Subject` など) |
 | `WpfCad2Lib.Wpf` | C# / WPF クラスライブラリ | `net10.0-windows10.0.26100.0` | 簡易 CAD ライブラリ。図形・選択・ズーム / パン・袋文字 |
 | `WpfCad2Lib.TestApp` | C# / WPF アプリ | `net10.0-windows10.0.26100.0` | WpfCad2Lib の動作確認アプリ |
-| `BezierSamples.Tests` | C# / xUnit | `net10.0-windows10.0.26100.0` | 曲線の変換の単体テスト (WpfCad2Lib・BezierWpf・BezierWinForm) |
+| `BezierSamples.Tests` | C# / xUnit | `net10.0-windows10.0.26100.0` | 曲線の変換・表示変換・入力・選択・履歴の単体テスト (WpfCad2Lib・BezierWpf・BezierWinForm) |
 | `BezierCanvas` | HTML / JavaScript | ブラウザ (ES2020) | `BezierWpf` と同じ機能を Canvas 2D (即時モード) で描く |
 | `BezierSvg` | HTML / JavaScript | ブラウザ (ES2020) | `BezierWpf` と同じ機能を SVG (保持モード) で描く |
 | `BezierHtml.Tests` | JavaScript / `node:test` | Node 22 以上 | HTML/JavaScript 版の単体テスト (曲線の変換・入力・コマンド・描画) |
@@ -307,6 +308,7 @@ n 個の通過点 P0〜P(n−1) から、最初と最後の区間も含めて n 
   - つなぎ目で 1 階微分と 2 階微分が一致すること
   - 両端で 2 階微分が 0 になること
   - 実装どうしで同じ制御点になること
+- **.NET の操作・状態の回帰テスト:** `BezierSamples.Tests` では、CAD のゼロ寸法からの復帰・パン／ズーム後のリサイズ・楕円輪郭の選択・削除順序と Update の Undo/Redo、WPF／CAD のドラッグ解放時の閾値判定・コマンド変更、WinForms のキャプチャー喪失も検証します。UI 要素を使う処理は STA で実行します。実マウス操作と .NET Framework ランタイム上の実行はこのテストの対象外です。
 - **HTML/JavaScript 版の単体テスト:** `BezierHtml.Tests` は、2 つの版の `geometry.js` について、WPF 系のテストと同じ入力生成式・許容誤差 (距離 1e-9) で同じ性質を確かめます。WinForms 版のテストは、`float` の丸めを考慮して許容誤差を 1e-3 にしています。閉じた曲線と Catmull-Rom 版の関数、0 点・1 点の戻り値、2 つの版の結果の一致も確かめます。
 
 ## HTML/JavaScript 版
@@ -480,6 +482,7 @@ classDiagram
         +Rect ModelArea
         +Rect ViewArea
         +bool IsHome
+        +bool IsViewValid
         +Matrix ModelToViewMatrix
         +Matrix ViewToModelMatrix
         +Home() void
@@ -495,7 +498,7 @@ classDiagram
         +GetEnumerator() IEnumerator~Figure~
         +Add(Figure figure) void
         +Remove(Figure figure) void
-        +Update(IList~Figure~ figures, Figure olderFigure, Figure newerFigure) bool
+        +Update(Figure olderFigure, Figure newerFigure) bool
         +RemoveAll() void
         +Select(UIElementCollection elementCollection, Point position, double nearDistance) void
         +GetSelected(bool isSelected) IEnumerable~Figure~
@@ -767,12 +770,22 @@ classDiagram
     Helper ..> HelperExtensions
 ```
 
+## .NET 版の入力・表示・履歴の仕様
+
+- WPF 両版と CAD は、ボタン解放位置でもドラッグ開始距離を判定します。開始後はその Command が終了まで処理し、途中で選んだ Command は次の操作から使います。
+- WinForms 両版は、キャプチャーを失ったときや、解放を取りこぼしてボタンなしの移動を受け取ったときに、最後の有効な位置で曲線を確定します。通常の解放後に喪失通知が来ても二重登録しません。
+- CAD のドラッグ開始距離はビュー上の **10 DIP** です。ズームしても画面上の距離は変わらず、Command にはモデル座標を渡します。
+- CAD のパン／ズーム後に View をリサイズしても、表示中心のモデル位置を維持します。Home は従来どおりモデル原点を左上とする全体表示へ戻します。Home のままリサイズした場合も左上基準です。
+- CAD の表示領域がゼロ寸法の間は最後の有効な行列を保ち、作図・ズーム・パンを停止します。作図中なら最後の有効位置で終了し、正の寸法になれば入力と行列更新を再開します。
+- CAD の楕円選択は、WPF の描画と同じく線幅の半分だけ内側に補正した線の中心までの距離を求めます。輪郭を細かい折れ線にし、外接矩形の角では選択しません。線幅より狭い楕円の退化した輪郭も扱います。
+- `CadData.Update(olderFigure, newerFigure)` は内部の図形一覧を同じ位置で置き換えます。外部一覧の引数は廃止しました。削除の Undo は元の位置へ戻し、図形の順序も復元します。
+
 ## 既知の制限
 
 - **Undo / Redo:** `CadData` に実装はありますが、UI にはつないでいません。つなぐには、操作ごとに `StartCommand()` を呼ぶことと、画面上の要素 (`UIElementCollection`) を同期することが必要です。
 - **スクロールバー:** WpfCad2Lib の `View` は `RenderTransform` で拡大するため、拡大しても `ScrollViewer` のスクロールバーは動きません。表示の移動はパンで行います。
 
-ほかの指摘事項と対応状況は、[Reviews/2026-10-21-repository-review.md](Reviews/2026-10-21-repository-review.md) にまとめています。
+ほかの指摘事項と対応状況は、[2026-10-21 のレビュー](Reviews/2026-10-21-repository-review.md) と [2026-10-22 の全体レビュー](Reviews/2026-10-22-repository-review.md) にまとめています。
 
 ## ライセンス
 

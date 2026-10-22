@@ -18,7 +18,8 @@ public class Device
 {
     Rect         modelArea         = new(new Size(1.0, 1.0));
     Rect         viewArea          = new(new Size(1.0, 1.0));
-    // 平行移動量。現在は Pan() / Zoom() が行列を直接平行移動するため、行列の計算には使われていない
+    Rect         lastValidViewArea = new(new Size(1.0, 1.0));
+    // 拡大後のビュー座標での平行移動量
     Vector       offset            = new();
     // ズーム率。1.0 が初期表示 (ModelArea 全体が ViewArea に収まる倍率)
     double       rate              = 1.0;
@@ -38,22 +39,35 @@ public class Device
         }
     }
 
-    /// <summary>表示先のビュー座標の範囲 (View の大きさ)。変わると行列を作り直す。</summary>
-    /// <remarks>行列を作り直すと、それまでのズームの中心合わせとパンの平行移動は失われる。</remarks>
+    /// <summary>表示先のビュー座標の範囲。パン・ズーム後は表示中心のモデル位置を保つ。</summary>
+    /// <remarks>ゼロ寸法の間は最後の有効な行列を保持し、正の寸法へ戻ったときに更新する。</remarks>
     public Rect ViewArea
     {
         get => viewArea;
         set
         {
             if (value != viewArea) {
+                Point? center = offset != new Vector() || rate != 1.0
+                    ? ViewToModelMatrix.Transform(lastValidViewArea.Center())
+                    : null;
                 viewArea = value;
+                if (!IsViewValid)
+                    return;
                 SetModelToViewMatrix();
+                if (center is not null)
+                    Offset += viewArea.Center() - ModelToViewMatrix.Transform(center.Value);
+                lastValidViewArea = viewArea;
             }
         }
     }
 
     /// <summary>初期表示の倍率かどうか。ズーム率だけで判定し、パンしたかどうかは見ない。</summary>
     public bool IsHome => Rate == 1.0;
+
+    /// <summary>ビューが正の大きさを持ち、表示変換と作図入力を処理できるかどうか。</summary>
+    public bool IsViewValid => !viewArea.IsEmpty
+        && double.IsFinite(viewArea.Width) && double.IsFinite(viewArea.Height)
+        && viewArea.Width > 0.0 && viewArea.Height > 0.0;
 
     /// <summary>モデル座標をビュー座標に変換する行列。</summary>
     public Matrix ModelToViewMatrix => modelToViewMatrix;
@@ -90,7 +104,6 @@ public class Device
     /// <summary>ズームとパンを取り消して、ModelArea 全体が見える初期表示に戻す。</summary>
     public void Home()
     {
-        // Pan() / Zoom() は行列を直接平行移動するため、offset と rate が初期値のままでも行列は作り直す
         offset = new();
         rate   = 1.0;
         SetModelToViewMatrix();
@@ -103,17 +116,13 @@ public class Device
     /// <param name="rate">ズーム率に掛ける倍率。1 より大きければ拡大、小さければ縮小。</param>
     public void Zoom(Point zoomCenterModelPoint, double rate)
     {
-        // 1. 中心点の、ズーム前のビュー座標を求める
-        // 2. ズーム率を変える (変わった場合は Rate のセッターで、平行移動を含まない拡大だけの行列に作り直される)
-        // 3. 中心点の、ズーム後のビュー座標を求める
-        // 4. その差だけビュー座標で逆向きに平行移動し、中心点を元の画面位置に戻す
-        //    (ズーム前の行列が持っていた平行移動 (パンなど) も、この差に含まれるので引き継がれる)
+        if (!IsViewValid)
+            return;
         var oldZoomCenterViewPoint        = zoomCenterModelPoint * ModelToViewMatrix;
         Rate *= rate;
         var newZoomCenterViewPoint        = zoomCenterModelPoint * ModelToViewMatrix;
         var zoomCenterViewPointDifference = newZoomCenterViewPoint - oldZoomCenterViewPoint;
-        modelToViewMatrix.Translate(-zoomCenterViewPointDifference.X, -zoomCenterViewPointDifference.Y);
-        SetViewToModelMatrix();
+        Offset -= zoomCenterViewPointDifference;
     }
 
     /// <summary>表示範囲を <paramref name="direction"/> の向きに動かす。</summary>
@@ -121,6 +130,8 @@ public class Device
     /// <param name="rate">移動量。ViewArea の対角線の長さに対する比率。</param>
     public void Pan(Direction direction, double rate)
     {
+        if (!IsViewValid)
+            return;
         // 移動量は View の大きさに比例させる (ズーム率には依存しない)
         var viewAreaTopLeft     = ViewArea.TopLeft    ;
         var viewAreaBottomRight = ViewArea.BottomRight;
@@ -133,13 +144,14 @@ public class Device
             _               => (         0.0,          0.0)
         };
         // 表示範囲を左へ動かす = 図形を右 (+X) へ平行移動する。拡大後のビュー座標で平行移動する
-        modelToViewMatrix.Translate(panX, panY);
-        SetViewToModelMatrix();
+        Offset += new Vector(panX, panY);
     }
 
-    // 行列を初期状態 (ModelArea・ViewArea・ズーム率だけから決まる拡大行列) から作り直し、逆行列も更新する
+    // 倍率と平行移動量から行列を作り直し、逆行列も更新する
     void SetModelToViewMatrix()
     {
+        if (!IsViewValid)
+            return;
         modelToViewMatrix = GetModelToViewMatrix();
         SetViewToModelMatrix();
     }
@@ -154,9 +166,6 @@ public class Device
     Matrix GetModelToViewMatrix()
     {
         var matrix = new Matrix(); 
-        //var modelAreaCenter = modelArea.Center();
-        //matrix.Translate(-modelAreaCenter.X - offset.X, -modelAreaCenter.Y - offset.Y);
-
         // 縦と横のうち、はみ出さない方 (小さい方) の倍率を使い、ModelArea 全体が ViewArea に収まるようにする。
         // モデル座標の原点がビューの左上に来る (中央寄せはしない)
         Debug.Assert(modelArea.Width != 0.0 && modelArea.Height != 0.0);
@@ -165,8 +174,7 @@ public class Device
         var scaleRate       = Math.Min(xRate, yRate) * rate;
         matrix.Scale(scaleRate, scaleRate);
 
-        //var viewAreaCenter  = viewArea.Center();
-        //matrix.Translate(viewAreaCenter.X, viewAreaCenter.Y);
+        matrix.Translate(offset.X, offset.Y);
 
         return matrix;
     }

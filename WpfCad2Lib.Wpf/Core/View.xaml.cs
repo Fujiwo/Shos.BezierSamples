@@ -20,11 +20,11 @@ namespace WpfCad2Lib.Wpf;
 /// </remarks>
 public partial class View : UserControl
 {
-    readonly MouseEventConverter mouseEventConverter = new();
+    readonly MouseEventConverter mouseEventConverter;
     Model                        model               = null!;
     Controller                   controller          = null!;
     // ズーム・パンの状態とモデル座標 ↔ ビュー座標の行列を持つ
-    Device                       device              = new();
+    readonly Device              device              = new();
 
     /// <summary>表示する Model。<see cref="Controller"/> より先に設定する (MVC クラスが行う)。</summary>
     public Model Model
@@ -69,6 +69,7 @@ public partial class View : UserControl
     /// <summary>View を作り、マウスイベントを MouseEventConverter につなぐ。</summary>
     public View()
     {
+        mouseEventConverter = new MouseEventConverter(device);
         InitializeComponent();
         InitializeMouseEventHandlers();
 
@@ -141,11 +142,15 @@ public partial class View : UserControl
         //    matrix.Scale(ActualWidth / firstActualSize.Width, ActualHeight / firstActualSize.Height);
         //    matrixTransform.Matrix = matrix;
         //}
-        // View の大きさが変わったら、Model.Area 全体が収まるよう行列を作り直す
+        // サイズが一時的に 0 になったら、最後の有効な位置で作図を終了し、復帰まで入力を止める
         if (model is null)
             return;
         device.ModelArea       = model.Area;
         device.ViewArea        = Area;
+        if (!device.IsViewValid) {
+            mouseEventConverter.OnLostMouseCapture();
+            canvas.ReleaseMouseCapture();
+        }
         matrixTransform.Matrix = device.ModelToViewMatrix;
         //SetCanvasPosition(canvas, model.Area, device.ViewToModelMatrix.Transform(Area));
     }

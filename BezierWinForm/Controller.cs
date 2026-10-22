@@ -22,6 +22,7 @@ public partial class Controller : Component,  IDrawable, IDrawableSubject
     // ドラッグ中の曲線。ドラッグの状態も表し、null ならドラッグしていない、null でなければドラッグ中。
     // MouseDown で作成し、MouseUp で Model に渡して null に戻す。
     BezierLine? bezierLine = null;
+    PointF lastPosition;
 
     /// <summary>
     /// ドラッグを終えて確定した曲線の追加先。
@@ -49,6 +50,7 @@ public partial class Controller : Component,  IDrawable, IDrawableSubject
     /// </summary>
     public void OnMouseDown(PointF point)
     {
+        lastPosition = point;
         bezierLine = new BezierLine();
         bezierLine.Add(point);
     }
@@ -60,6 +62,7 @@ public partial class Controller : Component,  IDrawable, IDrawableSubject
     {
         // ドラッグしていないとき (bezierLine が null) のマウス移動は無視する。
         if (bezierLine is not null) {
+            lastPosition = point;
             // 直前の点に近すぎて間引かれたときは形が変わらないので、再描画を要求しない。
             if (bezierLine.Add(point))
                 Update?.Invoke(this);
@@ -72,13 +75,16 @@ public partial class Controller : Component,  IDrawable, IDrawableSubject
     public void OnMouseUp(PointF point)
     {
         if (bezierLine is not null) {
-            bezierLine.AddLast(point);
-            // Model.Add が Model の Update を発生させ、View が確定済みの図形をすべて描き直す。
-            Model?.Add(bezierLine);
-            // ドラッグ終了。以降 Draw は何も描かないので、曲線は Model 側からだけ描かれる。
+            var completedLine = bezierLine;
             bezierLine = null;
+            completedLine.AddLast(point);
+            // Model.Add が Model の Update を発生させ、View が確定済みの図形をすべて描き直す。
+            Model?.Add(completedLine);
         }
     }
+
+    /// <summary>キャプチャー喪失時は最後に受け取った位置で曲線を確定する。</summary>
+    public void OnMouseCaptureLost() => OnMouseUp(lastPosition);
 
     /// <summary>
     /// ドラッグ中の曲線を描く。ドラッグしていないときは何も描かない。

@@ -9,7 +9,7 @@
 /// 役割分担:
 /// Model は図形データ (<see cref="CadData"/>) と現在の図形属性を持つ。
 /// View はマウス入力を受けてクリック/ドラッグに変換し、Controller に渡す。また拡大・縮小・パンを行う。
-/// Controller は受け取った操作を現在の Command にそのまま委譲する。
+/// Controller はクリックを現在の Command に、ドラッグを開始時の Command に委譲する。
 /// Command (Edit / 線分 / 矩形 など) が実際の処理 (図形の作成・選択) を行う。
 /// </remarks>
 public class MVC

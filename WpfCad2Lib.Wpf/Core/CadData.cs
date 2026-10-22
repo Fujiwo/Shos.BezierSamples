@@ -64,17 +64,16 @@ public class CadData : IEnumerable<Figure>
     /// <summary>図形を追加し、Undo の履歴に記録する。</summary>
     public void Add(Figure figure) => undo.Add(figures, figure);
 
-    /// <summary>図形を削除し、Undo の履歴に記録する。</summary>
+    /// <summary>図形を削除し、Undo の履歴に記録する。一覧に無い図形は何もしない。</summary>
     public void Remove(Figure figure) => undo.Remove(figures, figure);
         
     /// <summary>
     /// <paramref name="olderFigure"/> を <paramref name="newerFigure"/> に置き換え (同じ位置に入れ替え)、Undo の履歴に記録する。
     /// </summary>
-    /// <param name="figures">置き換えを行う図形の一覧。</param>
     /// <param name="olderFigure">置き換えられる図形。</param>
     /// <param name="newerFigure">新しい図形。</param>
     /// <returns><paramref name="olderFigure"/> が一覧に無く、置き換えなかった場合は false。</returns>
-    public bool Update(IList<Figure> figures, Figure olderFigure, Figure newerFigure)
+    public bool Update(Figure olderFigure, Figure newerFigure)
         => undo.Update(figures, olderFigure, newerFigure);
 
     /// <summary>すべての図形を 1 つずつ削除し、それぞれを Undo の履歴に記録する。</summary>

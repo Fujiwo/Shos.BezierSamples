@@ -79,30 +79,31 @@ public class LineFigure : Figure
 /// </summary>
 public abstract class RectFigure : Figure
 {
-    Rect  position = new();
+    /// <summary>図形の位置と大きさを決める外接矩形。</summary>
+    protected Rect Position { get; private set; } = new();
     // ドラッグを開始した位置。現在位置との 2 点から毎回矩形を作り直す
     Point startPosition;
 
     /// <summary>
     /// 幅と高さがどちらも 0 でなければ有効とする。
     /// </summary>
-    public override bool IsValid => position.Width != 0.0 && position.Height != 0.0;
+    public override bool IsValid => Position.Width != 0.0 && Position.Height != 0.0;
 
     /// <summary>
     /// 図形の矩形そのもの。
     /// </summary>
-    protected override Rect? Bounds => position;
+    protected override Rect? Bounds => Position;
 
     /// <summary>
-    /// 点と矩形の枠線との距離を返す。楕円もこの矩形で近似して判定する。
+    /// 点と矩形の枠線との距離を返す。
     /// </summary>
     protected override double GetDistance(Point point, double nearDistance)
-        => Geo.Distance(point, position);
+        => Geo.Distance(point, Position);
 
     /// <summary>
     /// 選択時に、矩形の 4 頂点にマーカーを表示する。
     /// </summary>
-    protected override IEnumerable<Point> SelectorPoints => position.ToPoints();
+    protected override IEnumerable<Point> SelectorPoints => Position.ToPoints();
 
     /// <summary>
     /// ドラッグ開始位置を覚え、大きさ 0 の矩形を置く。
@@ -124,8 +125,8 @@ public abstract class RectFigure : Figure
     void Set(IEnumerable<FrameworkElement> elements, Point point)
     {
         // Rect(Point, Point) は 2 点の大小を正規化するので、左上以外の方向へドラッグしても幅・高さは負にならない
-        position = new Rect(startPosition, point);
-        Set(elements.First(), position);
+        Position = new Rect(startPosition, point);
+        Set(elements.First(), Position);
     }
 
     // Canvas 上の要素は、添付プロパティ Canvas.Left / Top で位置を、Width / Height で大きさを指定する
@@ -155,6 +156,42 @@ public class RectangleFigure : RectFigure
 /// </summary>
 public class EllipseFigure : RectFigure
 {
+    Rect OutlineBounds
+    {
+        get
+        {
+            // WPF の Ellipse は、線の中心を線幅の半分だけレイアウト矩形の内側に置く。
+            var stroke = Attribute.StrokeThickness;
+            return new Rect(Position.X + stroke / 2, Position.Y + stroke / 2,
+                System.Math.Max(0, Position.Width - stroke), System.Math.Max(0, Position.Height - stroke));
+        }
+    }
+
+    /// <summary>線幅による内側への補正も反映した輪郭の範囲。</summary>
+    protected override Rect? Bounds => OutlineBounds;
+
+    /// <summary>表示と同じ楕円の輪郭を折れ線にして、点との距離を求める。</summary>
+    protected override double GetDistance(Point point, double nearDistance)
+    {
+        var bounds = OutlineBounds;
+        if (bounds.Width == 0 || bounds.Height == 0) {
+            var nearest = new Point(
+                System.Math.Clamp(point.X, bounds.Left, bounds.Right),
+                System.Math.Clamp(point.Y, bounds.Top, bounds.Bottom));
+            return (point - nearest).Length;
+        }
+        var tolerance = System.Math.Max(1e-6, System.Math.Min(0.001, nearDistance * 0.001));
+        var outline = new EllipseGeometry(bounds).GetFlattenedPathGeometry(tolerance, ToleranceType.Absolute);
+        var minimumDistance = double.MaxValue;
+        foreach (var path in outline.Figures) {
+            var points = new[] { path.StartPoint }
+                .Concat(path.Segments.OfType<PolyLineSegment>().SelectMany(segment => segment.Points))
+                .Append(path.StartPoint);
+            minimumDistance = System.Math.Min(minimumDistance, Geo.Distance(point, points));
+        }
+        return minimumDistance;
+    }
+
     /// <summary>
     /// 表示用の WPF の <see cref="Ellipse"/> を 1 つ作る。
     /// </summary>

@@ -12,6 +12,7 @@ namespace BezierWpf;
 public class Controller : IMouseAcceptor
 {
     Command? command = null;
+    Command? dragCommand;
 
     /// <summary>
     /// 図形を追加する先 (Canvas の子要素)。<see cref="View.Controller"/> の設定時に View が渡す。
@@ -31,6 +32,7 @@ public class Controller : IMouseAcceptor
     /// <summary>
     /// 現在の描画モード。メニューの選択に応じて <see cref="MainWindow"/> が差し替える。
     /// 新しい Command には、描き込む先として現在の Model を渡す。
+    /// ドラッグ中の変更は次の操作から使い、現在のドラッグは開始時の Command で完了する。
     /// </summary>
     public Command? Command
     {
@@ -42,25 +44,32 @@ public class Controller : IMouseAcceptor
         }
     }
 
-    // 以下の 4 つは、どれも現在の Command にそのまま委譲する (Command が未設定なら何もしない)
-
     /// <summary>
     /// クリックを現在の Command に委譲する。
     /// </summary>
     public void OnClick(Point position) => Command?.OnClick(position);
 
     /// <summary>
-    /// ドラッグの開始を現在の Command に委譲する。
+    /// ドラッグの通知先を固定して開始する。
     /// </summary>
-    public void OnDragStart(Point position) => Command?.OnDragStart(position);
+    public void OnDragStart(Point position)
+    {
+        dragCommand = Command;
+        dragCommand?.OnDragStart(position);
+    }
 
     /// <summary>
-    /// ドラッグ中の移動を現在の Command に委譲する。
+    /// ドラッグ中の移動を開始時の Command に委譲する。
     /// </summary>
-    public void OnDragging(Point position) => Command?.OnDragging(position);
+    public void OnDragging(Point position) => dragCommand?.OnDragging(position);
 
     /// <summary>
-    /// ドラッグの終了を現在の Command に委譲する。
+    /// 開始時の Command でドラッグを終了し、通知先の参照を解放する。
     /// </summary>
-    public void OnDragEnd(Point position) => Command?.OnDragEnd(position);
+    public void OnDragEnd(Point position)
+    {
+        var endingCommand = dragCommand;
+        dragCommand = null;
+        endingCommand?.OnDragEnd(position);
+    }
 }

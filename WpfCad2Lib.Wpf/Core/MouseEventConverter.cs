@@ -32,12 +32,16 @@ static class MouseEventConverterExtension
 // ドラッグと確定した時点でまとめて Dragging として流すので、ドラッグの軌跡 (自由曲線など) は欠けない。
 class MouseEventConverter
 {
+    readonly Device device;
+
+    public MouseEventConverter(Device device) => this.device = device;
+
     public event Action<Point>? Click;
     public event Action<Point>? DragStart;
     public event Action<Point>? Dragging;
     public event Action<Point>? DragEnd;
 
-    // ボタンを押した位置からこの距離 (Canvas 上の座標) 以上動いたらドラッグとみなす
+    // ボタンを押した位置からこの距離 (未変換のビュー座標、DIP) 以上動いたらドラッグとみなす
     const double          dragStartLength   = 10.0;
 
     bool                  isStarted         = false;
@@ -50,6 +54,8 @@ class MouseEventConverter
 
     public void OnMouseLeftButtonDown(object sender, MouseEventArgs e)
     {
+        if (!device.IsViewValid)
+            return;
         OnMouseLeftButtonDown(e.ToPosition(sender));
         // 要素の外でボタンを離しても MouseLeftButtonUp を受け取れるようにする
         ((UIElement)sender).CaptureMouse();
@@ -73,16 +79,25 @@ class MouseEventConverter
 
     public void OnMouseLeftButtonDown(Point position)
     {
+        if (!device.IsViewValid) {
+            OnLostMouseCapture();
+            return;
+        }
         isStarted     = true ;
         isDragging    = false;
         startPosition =
         lastPosition  = position;
     }
 
-    bool CanDragStart(Point position) => (startPosition - position).Length >= dragStartLength;
+    bool CanDragStart(Point position)
+        => device.ModelToViewMatrix.Transform(startPosition - position).Length >= dragStartLength;
 
     public void OnMouseMove(Point position)
     {
+        if (!device.IsViewValid) {
+            OnLostMouseCapture();
+            return;
+        }
         lastPosition = position;
         if (isDragging) {
             RaiseDragging(position);
@@ -99,6 +114,13 @@ class MouseEventConverter
     // ドラッグ中ならドラッグ終了、押下中 (ほとんど動いていない) ならクリックとして通知する
     public void OnMouseLeftButtonUp(Point position)
     {
+        if (!device.IsViewValid) {
+            OnLostMouseCapture();
+            return;
+        }
+        if (isStarted && !isDragging && CanDragStart(position))
+            OnMouseMove(position);
+
         if (isDragging) {
             RaiseDragEnd(position);
             isDragging = isStarted = false;

@@ -11,6 +11,7 @@ namespace WpfCad2Lib.Wpf;
 public class Controller : IMouseAcceptor
 {
     Command? command;
+    Command? dragCommand;
 
     /// <summary>操作対象の Model。View.Controller のセッターから設定される。</summary>
     public Model?               Model             { private get; set; }
@@ -19,6 +20,7 @@ public class Controller : IMouseAcceptor
 
     /// <summary>
     /// 現在の Command。設定すると Model と描画先を Command に渡し、<see cref="Wpf.Command.OnStart"/> を呼ぶ。
+    /// ドラッグ中の変更は次の操作から使い、現在のドラッグは開始時の Command で完了する。
     /// </summary>
     /// <remarks>Model と ElementCollection を先に設定しておく必要がある (MVC のコンストラクターがこの順で設定する)。</remarks>
     public Command Command
@@ -36,7 +38,7 @@ public class Controller : IMouseAcceptor
         }
     }
 
-    // 以下の 4 メソッドは、Command がその操作を受け付ける場合 (CanClick / CanDrag) だけ委譲する。
+    // クリックとドラッグ開始は、Command がその操作を受け付ける場合だけ委譲する。
     // 例えば EditCommand はドラッグを無視し、図形追加の Command はクリックを無視する。
 
     /// <summary>クリックを Command に委譲する。</summary>
@@ -51,21 +53,21 @@ public class Controller : IMouseAcceptor
     /// <summary>ドラッグ開始を Command に委譲する。</summary>
     public void OnDragStart(Point position)
     {
-        if (command is not null && command.CanDrag)
-            command.OnDragStart(position);
+        dragCommand = command is not null && command.CanDrag ? command : null;
+        dragCommand?.OnDragStart(position);
     }
 
     /// <summary>ドラッグ中の移動を Command に委譲する。</summary>
     public void OnDragging(Point position)
     {
-        if (command is not null && command.CanDrag)
-            command.OnDragging(position);
+        dragCommand?.OnDragging(position);
     }
 
     /// <summary>ドラッグ終了を Command に委譲する。</summary>
     public void OnDragEnd(Point position)
     {
-        if (command is not null && command.CanDrag)
-            command.OnDragEnd(position);
+        var endingCommand = dragCommand;
+        dragCommand = null;
+        endingCommand?.OnDragEnd(position);
     }
 }

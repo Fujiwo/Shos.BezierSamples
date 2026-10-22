@@ -8,7 +8,7 @@ namespace BezierWpf;
 
 /// <summary>
 /// 描画モード (編集・線分・矩形・曲線など) ごとのマウス操作の処理の基底クラス (Command パターン)。
-/// <see cref="Controller"/> は受け取ったクリック/ドラッグを現在の Command にそのまま委譲するので、
+/// <see cref="Controller"/> はクリックを現在の Command に、ドラッグを開始時の Command に委譲するので、
 /// モードの違いはすべて派生クラスに閉じ込められる。何もしない既定の実装を持ち、派生クラスは必要なものだけをオーバーライドする。
 /// </summary>
 public abstract class Command : IMouseAcceptor

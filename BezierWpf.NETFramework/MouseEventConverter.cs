@@ -113,6 +113,9 @@ namespace BezierWpf
 
         public void OnMouseLeftButtonUp(Point position)
         {
+            if (isStarted && !isDragging && CanDragStart(position))
+                OnMouseMove(position);
+
             // ドラッグ中 → 待機中
             if (isDragging) {
                 RaiseDragEnd(position);
