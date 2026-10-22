@@ -28,7 +28,7 @@
   <text x="590" y="96" font-size="16" font-weight="600" fill="#24292f" text-anchor="middle">P7</text>
   <rect x="24" y="320" width="592" height="62" rx="8" fill="#f6f8fa" stroke="#d0d7de"/>
   <line x1="40" y1="342" x2="72" y2="342" stroke="#1f6feb" stroke-width="3.5" stroke-linecap="round"/>
-  <text x="82" y="347" font-size="14" fill="#24292f">3 次スプライン (いまの描画)。曲率まで連続 (C²)、両端も曲線</text>
+  <text x="82" y="347" font-size="14" fill="#24292f">3 次スプライン (サンプルの描画に使用)。曲率まで連続 (C²)、両端も曲線</text>
   <line x1="40" y1="366" x2="72" y2="366" stroke="#e36209" stroke-width="3" stroke-linecap="round" stroke-dasharray="8 6"/>
-  <text x="82" y="371" font-size="14" fill="#24292f">Catmull-Rom (以前の描画)。向きまで連続 (C¹)、両端は直線</text>
+  <text x="82" y="371" font-size="14" fill="#24292f">Catmull-Rom。向きまで連続 (C¹)、両端は直線</text>
 </svg>

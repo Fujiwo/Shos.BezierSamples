@@ -1,6 +1,7 @@
 # Shos.BezierSamples
 
 マウスで指定した**すべての通過点を滑らかに通る曲線 (3 次スプライン曲線)** を、3 次ベジエ曲線の列として描くサンプル集です。
+各プロジェクトには、通過点の列をベジエ曲線に変換する関数として、**3 次スプライン曲線**と **Catmull-Rom スプライン**の 2 種類があります。サンプルアプリケーションは、どれも 3 次スプライン曲線で描きます。
 同じアルゴリズムを Win32 (C++)・Windows Forms・WPF で書き分けているので、API ごとの違いを見比べられます。
 WPF 版を発展させた簡易 CAD ライブラリ **WpfCad2Lib** も含まれています。
 
@@ -115,7 +116,9 @@ dotnet test BezierSamples.Tests/BezierSamples.Tests.csproj
 
 ## 通過点を通る曲線を作るしくみ
 
-どのプロジェクトも、通過点の列から**自然 3 次スプライン曲線** (すべての点を通り、つなぎ目で曲率まで連続する曲線) を求め、3 次ベジエ曲線の列として描いています。
+各プロジェクトには、3 次スプライン曲線と Catmull-Rom スプラインの変換関数があります。
+サンプルアプリケーション (Win32 版・WinForms 版・WPF 版・WpfCad2Lib) は、どれも通過点の列から**自然 3 次スプライン曲線** (すべての点を通り、つなぎ目で曲率まで連続する曲線) を求め、3 次ベジエ曲線の列として描きます。
+この章では、まず 3 次スプライン曲線を説明し、最後に [Catmull-Rom スプラインとの比較](#catmull-rom-スプラインとの比較) で 2 つの違いを説明します。
 
 ### 1 区間の制御点
 
@@ -225,8 +228,8 @@ n 個の通過点 P0〜P(n−1) から、最初と最後の区間も含めて n 
 
 ### Catmull-Rom スプラインとの比較
 
-**Catmull-Rom スプライン**による曲線描画と3 次スプラインを比較します。
-**Catmull-Rom スプライン**による変換関数 (`ToBezierPolyline` / `ToBezierPolygon` など) は、各プロジェクトにあります。
+各プロジェクトには、3 次スプライン曲線の関数と並んで、**Catmull-Rom スプライン**でベジエ曲線用の点列を作る関数 (`ToBezierPolyline` / `ToBezierPolygon` など) があります。
+サンプルアプリケーションの描画には使っていませんが、3 次スプライン曲線と比べられるよう、同じ形式の点列を返します。
 
 違うのは**接線 m の求め方だけ**です。Catmull-Rom は、両隣の点だけで `m(i) = (P(i+1) − P(i−1)) / 2` と決めます。
 制御点は `P(i+1) ± (P(i+2) − P(i)) / 6` になります (1/6 = 接線の 1/2 × 制御点の位置 1/3)。
@@ -247,21 +250,23 @@ n 個の通過点 P0〜P(n−1) から、最初と最後の区間も含めて n 
 | 計算 | 三重対角の連立方程式 (O(n)) | 区間ごとに個別に計算 |
 | 最適性 | 曲がりの総量 ∫‖C″‖² が最小 | 特に無い |
 
-Catmull-Rom では、最初の区間 (P0 → P1) と最後の区間は直線になっています。
+`ToBezierPolyline` は前後の点がそろう内側の n − 3 区間だけを返すので、Catmull-Rom で描く場合、最初の区間 (P0 → P1) と最後の区間は呼び出し側で直線にします。
 
 ![Catmull-Rom スプラインで通過点の列全体をベジエ曲線と直線でつなぐ図](docs/images/bezier-polyline.svg)
 
 ### プロジェクトごとの関数
 
-| プロジェクト | 接線・変換 | 描画 |
-|---|---|---|
-| `BezierWin32` | `Win32Graphics::ToSplineTangents` / `ToSplineBezier` | `::MoveToEx` + `::PolyBezierTo` (2 点のときは `::Polyline`) |
-| `BezierWinForm` | `GeometryExtensions.ToSplineTangents` / `ToSplineBezier` / `ToClosedSplineBezier` | `Graphics.DrawBeziers` (2 点のときは `Graphics.DrawLine`) |
-| `BezierWpf` | `GeometryExtensions.ToSplineTangents` / `ToSplineBezier` / `ToClosedSplineBezier` | `PathGeometry` + `BezierSegment` |
-| `WpfCad2Lib.Wpf` | `GeoExtensions.ToSplineTangents` / `ToSplineBezier` / `ToClosedSplineBezier` | `GeoHelper.BezierPathGeometry` (`PathGeometry`)、`CurveFigure` (差分更新) |
+| プロジェクト | 3 次スプライン (サンプルで使用) | Catmull-Rom | 描画 |
+|---|---|---|---|
+| `BezierWin32` | `Win32Graphics::ToSplineTangents` / `ToSplineBezier` | `Win32Graphics::ToBezierPolyline` | `::MoveToEx` + `::PolyBezierTo` (2 点のときは `::Polyline`) |
+| `BezierWinForm` | `GeometryExtensions.ToSplineTangents` / `ToSplineBezier` / `ToClosedSplineBezier` | `GeometryExtensions.ToBezierPolyline` / `ToBezierPolygon`、`Geometry.ToBezier` | `Graphics.DrawBeziers` (2 点のときは `Graphics.DrawLine`) |
+| `BezierWpf` | `GeometryExtensions.ToSplineTangents` / `ToSplineBezier` / `ToClosedSplineBezier` | `GeometryExtensions.ToBezierPolyline` / `ToBezierPolygon`、`Geo.ToBezier` | `PathGeometry` + `BezierSegment` |
+| `WpfCad2Lib.Wpf` | `GeoExtensions.ToSplineTangents` / `ToSplineBezier` / `ToClosedSplineBezier` | `GeoExtensions.ToBezierPolyline` / `ToBezierPolygon`、`Geo.ToBezier` | `GeoHelper.BezierPathGeometry` (`PathGeometry`)、`CurveFigure` (差分更新) |
+
+- **閉じた曲線:** `BezierWin32` には、閉じた曲線の関数 (3 次スプラインの `ToClosedSplineBezier`、Catmull-Rom の `ToBezierPolygon`) はありません。
 
 - **座標の型:** Win32 版は整数の `POINT` なので、接線は実数のベクトル (`Vector2`) で求め、制御点を最後に整数へ丸めます。WinForms 版は `float` の `PointF` なので、連立方程式の途中の計算を `double` で行います。
-- **単体テスト:** `BezierSamples.Tests` は、.NET 10 版の 3 つの実装 (WpfCad2Lib・BezierWpf・BezierWinForm) について次の点を確かめています。
+- **単体テスト:** `BezierSamples.Tests` は、.NET 10 版の 3 つの実装 (WpfCad2Lib・BezierWpf・BezierWinForm) の 3 次スプライン曲線の関数について、次の点を確かめています (Catmull-Rom の関数はテストの対象外です)。
   - すべての点を通ること
   - つなぎ目で 1 階微分と 2 階微分が一致すること
   - 両端で 2 階微分が 0 になること

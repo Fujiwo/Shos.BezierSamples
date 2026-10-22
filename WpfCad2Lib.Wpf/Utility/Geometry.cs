@@ -296,7 +296,7 @@ public static class Geo
 /// </summary>
 /// <remarks>
 /// 通過点の列の変換には、すべての点を通る 3 次スプライン曲線 (<c>ToSplineBezier</c> / <c>ToClosedSplineBezier</c>、描画に使う) と、
-/// 比較用に残している Catmull-Rom 版 (<c>ToBezierPolyline</c> / <c>ToBezierPolygon</c>) がある。
+/// Catmull-Rom 版 (<c>ToBezierPolyline</c> / <c>ToBezierPolygon</c>、3 次スプライン曲線と比べるためのもの) がある。
 /// どちらも、各通過点での接線 m から 3 次ベジエの制御点を P ± m / 3 として求める点は同じで、違うのは接線の求め方だけである。
 /// </remarks>
 public static class GeoExtensions
@@ -378,7 +378,7 @@ public static class GeoExtensions
         /// <para>点が 4 個未満のときはベジエ区間が作れないので、入力の点をそのまま返す。</para>
         /// <para>
         /// 描画には 3 次スプライン曲線 (<see cref="ToSplineBezier"/>) を使っている。
-        /// この Catmull-Rom 版は、3 次スプラインと比べるために残している。
+        /// この Catmull-Rom 版は、3 次スプラインと比べるために用意している。
         /// </para>
         /// </remarks>
         public IEnumerable<Point> ToBezierPolyline()

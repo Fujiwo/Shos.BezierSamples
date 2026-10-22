@@ -150,7 +150,7 @@ public static class Geo
 /// </summary>
 /// <remarks>
 /// 通過点の列の変換には、すべての点を通る 3 次スプライン曲線 (<c>ToSplineBezier</c> / <c>ToClosedSplineBezier</c>、描画に使う) と、
-/// 比較用に残している Catmull-Rom 版 (<c>ToBezierPolyline</c> / <c>ToBezierPolygon</c>) がある。
+/// Catmull-Rom 版 (<c>ToBezierPolyline</c> / <c>ToBezierPolygon</c>、3 次スプライン曲線と比べるためのもの) がある。
 /// どちらも、各通過点での接線 m から 3 次ベジエの制御点を P ± m / 3 として求める点は同じで、違うのは接線の求め方だけである。
 /// </remarks>
 public static class GeometryExtensions
@@ -231,7 +231,7 @@ public static class GeometryExtensions
         /// 前後に点がそろっている内側の n − 3 区間 (P1 → P2 〜 P(n−3) → P(n−2)) だけを変換するので、
         /// 結果は P1 から始まり P(n−2) で終わる。最初の区間 (P0 → P1) と最後の区間 (P(n−2) → P(n−1)) は
         /// 片側の点が無く向きが決まらないので含まない (描くなら呼び出し側で直線にする)。
-        /// 描画には 3 次スプライン曲線 (<c>ToSplineBezier</c>) を使っていて、この Catmull-Rom 版は比べるために残している。
+        /// 描画には 3 次スプライン曲線 (<c>ToSplineBezier</c>) を使い、この Catmull-Rom 版は 3 次スプライン曲線と比べるために用意している。
         /// </summary>
         /// <returns>点が 4 個以上なら 1 + 3 × (n − 3) 個の点。4 個未満ならベジエの区間が作れないので、通過点をそのまま返す。</returns>
         public IEnumerable<Point> ToBezierPolyline()

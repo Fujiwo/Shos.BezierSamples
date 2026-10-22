@@ -165,7 +165,7 @@ namespace BezierWin32 {
         // 通過点の列を、Catmull-Rom スプラインのベジエ描画用の点列 [始点, 制御点1, 制御点2, 終点, 制御点1, 制御点2, 終点, …] に変換する。
         // 前後に隣の点がそろっている内側の区間 P1 → P2, P2 → P3, …, P(n−3) → P(n−2) (n − 3 区間) だけを変換する。
         // 通過点が 4 個未満のときはベジエにできる区間が無いので、通過点をそのまま返す。
-        // 描画には 3 次スプライン曲線 (ToSplineBezier) を使っていて、この関数は比べるために残している。
+        // 描画には 3 次スプライン曲線 (ToSplineBezier) を使い、この関数は 3 次スプライン曲線と比べるために用意している。
         [[nodiscard]] static vector<POINT> ToBezierPolyline(span<const POINT> points)
         {
             if (points.size() < 4)

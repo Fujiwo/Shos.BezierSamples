@@ -87,7 +87,7 @@ public static class Geometry
 /// <remarks>
 /// PointF を「位置」、SizeF を「2 点間の差 (ベクトル)」として使い分ける (各通過点での接線も SizeF で表す)。
 /// 通過点の列の変換には、すべての点を通る 3 次スプライン曲線 (ToSplineBezier / ToClosedSplineBezier、描画に使う) と、
-/// 比較用に残している Catmull-Rom 版 (ToBezierPolyline / ToBezierPolygon) がある。
+/// Catmull-Rom 版 (ToBezierPolyline / ToBezierPolygon、3 次スプライン曲線と比べるためのもの) がある。
 /// どちらも、各通過点での接線 m から 3 次ベジエの制御点を P ± m / 3 として求める点は同じで、違うのは接線の求め方だけである。
 /// </remarks>
 public static class GeometryExtensions
@@ -183,7 +183,7 @@ public static class GeometryExtensions
         /// <remarks>
         /// 前後に隣の点がそろっている内側の区間 P1 → P2, P2 → P3, …, P(n−3) → P(n−2) (n − 3 区間) だけを変換する。
         /// 最初の区間 P0 → P1 と最後の区間 P(n−2) → P(n−1) は含まないので、描くなら呼び出し側で直線にする。
-    /// 描画には 3 次スプライン曲線 (ToSplineBezier) を使っていて、この Catmull-Rom 版は比べるために残している。
+    /// 描画には 3 次スプライン曲線 (ToSplineBezier) を使い、この Catmull-Rom 版は 3 次スプライン曲線と比べるために用意している。
         /// 通過点が 4 個未満のときはベジエにできる区間が無いので、通過点をそのまま返す。
         /// </remarks>
         /// <returns>Graphics.DrawBeziers にそのまま渡せる形式の点列。</returns>
