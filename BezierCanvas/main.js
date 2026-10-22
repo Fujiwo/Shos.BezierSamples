@@ -13,7 +13,7 @@ view.controller    = controller;
 controller.command = new EditCommand();
 
 // ツールバーのボタン (data-command 属性) ごとに、選んだときに作る Command。
-// Controller は受け取ったマウス操作を現在の Command に委譲するだけなので、モードを増やしても Controller は変わらない
+// Controller は受け取ったマウス操作を Command に委譲するだけなので、モードを増やしても Controller は変わらない
 const commandFactories = {
     line     : () => new LineCommand(),
     rectangle: () => new RectangleCommand(),

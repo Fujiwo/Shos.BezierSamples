@@ -5,7 +5,7 @@
 
 const { describe, test } = require("node:test");
 const assert = require("node:assert/strict");
-const { loadScripts, FakeSvgElement, installFakeDocument, loadPage } = require("./fakes.js");
+const { loadScripts, FakeSvgElement, installFakeDocument, loadPage, pointerEvent } = require("./fakes.js");
 
 installFakeDocument();
 const {
@@ -219,16 +219,21 @@ describe("BezierSvg の View", () => {
 });
 
 describe("BezierSvg のページ", () => {
-    test("index.html のスクリプトを 1 つのスコープで順に読み込み、ツールバーで描画モードを切り替えて描ける", () => {
+    function createPage() {
         const svg  = new FakeSvgElement(svgNamespace, "svg");
         const page = loadPage("BezierSvg", svg, {});
+        const pointer = (type, x, y, properties) => svg.dispatch(type, pointerEvent(svg, Object.assign({
+            clientX: x, clientY: y
+        }, properties)));
+        return { svg, page, pointer };
+    }
+
+    test("index.html のスクリプトを 1 つのスコープで順に読み込み、ツールバーで描画モードを切り替えて描ける", () => {
+        const { svg, page, pointer } = createPage();
         assert.deepEqual(page.sources, [
             "geometry.js", "graphic-helper.js", "mouse-event-converter.js", "model.js",
             "command.js", "controller.js", "view.js", "main.js"
         ]);
-        const pointer = (type, x, y, properties) => svg.dispatch(type, Object.assign({
-            currentTarget: svg, pointerId: 1, isPrimary: true, button: -1, buttons: 1, clientX: x, clientY: y, preventDefault() {}
-        }, properties));
         const dragLine = () => {
             pointer("pointerdown", 0, 0, { button: 0 });
             pointer("pointermove", 50, 0, {});
@@ -251,4 +256,72 @@ describe("BezierSvg のページ", () => {
         assert.equal(svg.children.length, 2);
         assert.ok(svg.children.every(child => child.tagName === "rect" && child.namespaceURI === svgNamespace));
     });
+
+    for (const selected of [0, 1]) {
+        for (const endType of ["pointerup", "pointercancel", "lostpointercapture"]) {
+            test(`ドラッグ中のボタン ${selected} の選択は次の作図から適用される (${endType})`, () => {
+                const { svg, page, pointer } = createPage();
+                page.buttons[0].click();
+                const originalCommand = page.evaluate("controller.command");
+                const originalEnd = originalCommand.onDragEnd;
+                let endCount = 0;
+                originalCommand.onDragEnd = position => {
+                    endCount++;
+                    originalEnd.call(originalCommand, position);
+                };
+                pointer("pointerdown", 0, 0, { button: 0 });
+                pointer("pointermove", 20, 0, {});
+                const line = svg.children[0];
+                page.buttons[selected].click();
+                const nextCommand = page.evaluate("controller.command");
+                assert.notEqual(nextCommand, originalCommand);
+                assert.equal(page.buttons[selected].getAttribute("aria-pressed"), "true");
+                pointer("pointermove", 40, 20, {});
+                assert.equal(svg.children.length, 1);
+                pointer(endType, 60, 30, { button: 0, buttons: 0 });
+                pointer("lostpointercapture", 60, 30, { buttons: 0 });
+                pointer("pointerup", 60, 30, { button: 0, buttons: 0 });
+                const end = endType === "pointerup" ? ["60", "30"] : ["40", "20"];
+                assert.deepEqual(["x1", "y1", "x2", "y2"].map(name => line.getAttribute(name)), ["0", "0", ...end]);
+                assert.equal(endCount, 1);
+                assert.equal(originalCommand.shape, null);
+                assert.equal(nextCommand.shape, null);
+                pointer("pointerdown", 10, 10, { button: 0 });
+                pointer("pointermove", 30, 25, {});
+                pointer("pointerup", 50, 40, { button: 0, buttons: 0 });
+                assert.equal(svg.children.length, 2);
+                const nextShape = svg.children[1];
+                if (selected === 0) {
+                    assert.equal(nextShape.tagName, "line");
+                    assert.deepEqual(["x1", "y1", "x2", "y2"].map(name => nextShape.getAttribute(name)), ["10", "10", "50", "40"]);
+                } else {
+                    assert.equal(nextShape.tagName, "rect");
+                    assert.deepEqual(["x", "y", "width", "height"].map(name => nextShape.getAttribute(name)), ["10", "10", "40", "30"]);
+                }
+                assert.equal(endCount, 1);
+            });
+        }
+    }
+
+    for (const selected of [0, 1]) {
+        for (const lastMove of [null, 9]) {
+            test(`解放時に初めて閾値を超えても図形 ${selected} を追加する (最後の移動: ${lastMove})`, () => {
+                const { svg, page, pointer } = createPage();
+                page.buttons[selected].click();
+                pointer("pointerdown", 0, 0, { button: 0 });
+                if (lastMove !== null)
+                    pointer("pointermove", lastMove, 0, {});
+                pointer("pointerup", 30, 40, { button: 0, buttons: 0 });
+                assert.equal(svg.children.length, 1);
+                const shape = svg.children[0];
+                if (selected === 0) {
+                    assert.equal(shape.tagName, "line");
+                    assert.deepEqual(["x1", "y1", "x2", "y2"].map(name => shape.getAttribute(name)), ["0", "0", "30", "40"]);
+                } else {
+                    assert.equal(shape.tagName, "rect");
+                    assert.deepEqual(["x", "y", "width", "height"].map(name => shape.getAttribute(name)), ["0", "0", "30", "40"]);
+                }
+            });
+        }
+    }
 });

@@ -186,6 +186,9 @@ class MouseEventConverter {
     }
 
     onButtonUp(position) {
+        // 移動通知が少なくても、解放位置で閾値を超えたら開始・移動を通知してから終える
+        if (this.isStarted && !this.isDragging && this.canDragStart(position))
+            this.onMove(position);
         // ドラッグ中 → 待機中
         if (this.isDragging) {
             this.raise("dragEnd", position);

@@ -34,6 +34,43 @@ for (const version of versions) {
                 assert.deepEqual(records, [["dragStart", 0, 0], ["dragging", 6, 8]]);
             });
 
+            for (const distance of [10, 30]) {
+                test(`移動通知が無くても解放位置の距離が ${distance} ならドラッグになる`, () => {
+                    const { converter, records } = create();
+                    converter.onButtonDown({ x: 0, y: 0 });
+                    converter.onButtonUp({ x: distance, y: 0 });
+                    assert.deepEqual(records, [["dragStart", 0, 0], ["dragging", distance, 0], ["dragEnd", distance, 0]]);
+                    assert.equal(converter.isStarted, false);
+                    assert.equal(converter.isDragging, false);
+                    assert.deepEqual(converter.draggingPositions, []);
+                    converter.onLostCapture();
+                    converter.onButtonUp({ x: distance, y: 0 });
+                    assert.equal(records.length, 3);
+                });
+            }
+
+            test("解放位置で初めて閾値を超えると、保留した移動・解放位置・終了を順に通知する", () => {
+                const { converter, records } = create();
+                converter.onButtonDown({ x: 0, y: 0 });
+                converter.onMove({ x: 3, y: 0 });
+                converter.onMove({ x: 9, y: 0 });
+                converter.onButtonUp({ x: 30, y: 0 });
+                assert.deepEqual(records, [
+                    ["dragStart", 0, 0], ["dragging", 3, 0], ["dragging", 9, 0],
+                    ["dragging", 30, 0], ["dragEnd", 30, 0]
+                ]);
+                converter.onButtonDown({ x: 50, y: 50 });
+                converter.onButtonUp({ x: 50, y: 50 });
+                assert.deepEqual(records.slice(5), [["click", 50, 50]]);
+            });
+
+            test("移動通知なしで閾値未満の位置で解放するとクリックになる", () => {
+                const { converter, records } = create();
+                converter.onButtonDown({ x: 0, y: 0 });
+                converter.onButtonUp({ x: 9.99, y: 0 });
+                assert.deepEqual(records, [["click", 9.99, 0]]);
+            });
+
             test("ドラッグと判定した時点で、押下位置の dragStart とためた位置の dragging を順に通知する", () => {
                 const { converter, records } = create();
                 converter.onButtonDown({ x: 0, y: 0 });
@@ -162,6 +199,18 @@ for (const version of versions) {
                 converter.onPointerMove(pointerEvent(element, { buttons: 0, clientX: 140, clientY: 60 }));
                 converter.onPointerMove(pointerEvent(element, { buttons: 0, clientX: 150, clientY: 60 }));
                 assert.deepEqual(records, [["dragStart", 0, 0], ["dragging", 20, 0], ["dragEnd", 40, 20]]);
+            });
+
+            test("左ボタン解放の pointermove で初めて閾値を超えてもドラッグになる", () => {
+                const { converter, records, element } = createWithElement();
+                converter.onPointerDown(pointerEvent(element, { button: 0, clientX: 100, clientY: 40 }));
+                converter.onPointerMove(pointerEvent(element, { clientX: 109, clientY: 40 }));
+                converter.onPointerMove(pointerEvent(element, { button: 0, buttons: 2, clientX: 130, clientY: 40 }));
+                converter.onPointerUp(pointerEvent(element, { button: 2, buttons: 0, clientX: 130, clientY: 40 }));
+                converter.onLostPointerCapture(pointerEvent(element, { buttons: 0 }));
+                assert.deepEqual(records, [["dragStart", 0, 0], ["dragging", 9, 0], ["dragging", 30, 0], ["dragEnd", 30, 0]]);
+                assert.equal(converter.activePointerId, null);
+                assert.deepEqual(element.calls, [["setPointerCapture", 1], ["releasePointerCapture", 1]]);
             });
 
             test("操作中のほかのポインター (2 本目の指) と、主ポインターでないポインターは無視する", () => {

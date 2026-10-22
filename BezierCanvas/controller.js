@@ -1,13 +1,14 @@
 ﻿"use strict";
 
 /**
- * MVC の Controller。View から受け取ったクリック/ドラッグを、現在の Command (描画モード) に委譲する。
+ * MVC の Controller。クリックは現在の Command (描画モード) に、ドラッグは開始時の Command に終了まで委譲する。
  * 自分ではモードごとの処理を持たず、Command を差し替えるだけで振る舞いが変わる (Command パターン)。
  */
 class Controller {
     constructor() {
         this.currentModel   = null;
         this.currentCommand = null;
+        this.dragCommand    = null;
     }
 
     /**
@@ -23,6 +24,7 @@ class Controller {
 
     /**
      * 現在の描画モード。ツールバーの選択に応じて main.js が差し替える。新しい Command には、描き込む先として現在の Model を渡す。
+     * ドラッグ中に差し替えても、進行中の図形は開始時の Command で完成させ、新しい Command は次のドラッグから使う。
      */
     get command() { return this.currentCommand; }
     set command(value) {
@@ -31,16 +33,24 @@ class Controller {
             value.model = this.currentModel;
     }
 
-    // 以下の 4 つは、どれも現在の Command にそのまま委譲する (Command が未設定なら何もしない)
-
     /** クリックを現在の Command に委譲する。 */
-    onClick    (position) { this.currentCommand?.onClick    (position); }
-    /** ドラッグの開始を現在の Command に委譲する。 */
-    onDragStart(position) { this.currentCommand?.onDragStart(position); }
-    /** ドラッグ中の移動を現在の Command に委譲する。 */
-    onDragging (position) { this.currentCommand?.onDragging (position); }
-    /** ドラッグの終了を現在の Command に委譲する。 */
-    onDragEnd  (position) { this.currentCommand?.onDragEnd  (position); }
+    onClick(position) { this.currentCommand?.onClick(position); }
+
+    /** ドラッグの通知先を開始時に固定する。 */
+    onDragStart(position) {
+        this.dragCommand = this.currentCommand;
+        this.dragCommand?.onDragStart(position);
+    }
+
+    /** ドラッグ中の移動を開始時の Command に委譲する。 */
+    onDragging(position) { this.dragCommand?.onDragging(position); }
+
+    /** 開始時の Command に終了を通知し、ドラッグの参照を手放す。 */
+    onDragEnd(position) {
+        const command = this.dragCommand;
+        this.dragCommand = null;
+        command?.onDragEnd(position);
+    }
 }
 
 // Node (テスト) から require されたときだけ公開する。ブラウザ (classic script) では module が無いので何もしない

@@ -18,7 +18,7 @@
     <text x="285" y="96" font-size="12" fill="#57606a">クリック・ドラッグに変換</text>
     <rect x="392" y="56" width="154" height="50" rx="6" fill="#f6f8fa" stroke="#1f6feb" stroke-width="1.5"/>
     <text x="469" y="77" font-weight="700" fill="#1f6feb">Controller</text>
-    <text x="469" y="96" font-size="12" fill="#57606a">現在の Command に委譲</text>
+    <text x="469" y="96" font-size="12" fill="#57606a">Command に委譲</text>
     <rect x="576" y="56" width="154" height="50" rx="6" fill="#f6f8fa" stroke="#1f6feb" stroke-width="1.5"/>
     <text x="653" y="77" font-weight="700" fill="#1f6feb">AddCommand</text>
     <text x="653" y="96" font-size="12" fill="#57606a">Template Method</text>
