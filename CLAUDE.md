@@ -6,16 +6,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 「すべての通過点を通る曲線を作る」同じアルゴリズムを Win32 (C++) / WinForms / WPF で書き分けた教材用サンプル集。曲線は自然3次スプライン: 各通過点の接線 m を三重対角の連立方程式 `m[i−1] + 4m[i] + m[i+1] = 3(P[i+1] − P[i−1])` (両端は自然スプラインの条件) をトーマス法で解いて求め、区間ごとに 3 次ベジエ `P[i], P[i] + m[i]/3, P[i+1] − m[i+1]/3, P[i+1]` で描く (`ToSplineTangents` / `ToSplineBezier`、閉じた曲線は Sherman-Morrison で `ToClosedSplineBezier`)。以前の Catmull-Rom 版 (`ToBezierPolyline` / `ToBezierPolygon`、制御点 `P[i+1] ± (P[i+2] − P[i]) / 6`) は比較用に残している。経緯は `Plans/2026-10-22-cubic-spline.md`。
 
-| プロジェクト | 種別 / ターゲット |
-|---|---|
-| BezierWin32 | C++ Win32, PlatformToolset v145 |
-| BezierWinForm / BezierWinForm.NETFramework | WinForms, `net10.0-windows10.0.26100.0` / .NET Framework 4.8 |
-| BezierWpf / BezierWpf.NETFramework | WPF, `net10.0-windows10.0.26100.0` / .NET Framework 4.8 |
-| WpfCad2Lib.Core | `net10.0` クラスライブラリ (`Subject` = `INotifyPropertyChanged` 基底など) |
-| WpfCad2Lib.Wpf | 簡易 CAD ライブラリ (図形・選択・Undo・ズーム/パン・袋文字) |
-| WpfCad2Lib.TestApp | WpfCad2Lib の動作確認アプリ |
-| BezierSamples.Tests | xUnit。WpfCad2Lib / BezierWpf / BezierWinForm (.NET 10 版) の曲線の変換のテスト |
-
 ## ビルド
 
 すべて `Shos.BezierSamples.sln` に含まれる。Windows 専用 (WinForms/WPF/Win32、.NET Framework 4.8) なので、通常は Windows の Visual Studio / MSBuild でビルドする。
